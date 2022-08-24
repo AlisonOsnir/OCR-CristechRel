@@ -7,19 +7,20 @@ let part0;
 let part1;
 let part2;
 let recognizedText;
+let formatedText;
 
 function main(image) {
     cropImage(image);
     setTimeout(() => ocrImage(0), 1 * 1000)
-    setTimeout(() => ocrImage(1), 10 * 1000)
-    setTimeout(() => ocrImage(2), 25 * 1000)
-    setTimeout(() => mergeText(part0, part1, part2), 42 * 1000)
-    setTimeout(() => findValues(recognizedText), 45 * 1000)
-    //setTimeout(() => writeCSV(), 48 * 1000) // Proxima passo.
+    setTimeout(() => ocrImage(1), 8 * 1000)
+    setTimeout(() => ocrImage(2), 22 * 1000)
+    setTimeout(() => mergeText(part0, part1, part2), 35 * 1000)
+    setTimeout(() => formatText(recognizedText), 36 * 1000)
+    setTimeout(() => findValues(formatedText), 37 * 1000)
+    //setTimeout(() => writeCSV(), 38 * 1000) // Proxima passo.
 }
 
 main(img)
-
 
 const croppedParts = {
     part0: [1, 20, 200, 30],
@@ -37,7 +38,6 @@ async function cropImage(img) {
         await image.writeAsync(`images/cropped_images/cropped_part${i}.png`);
     }
 }
-
 
 function ocrImage(part) {
     console.log(`OCR croppedPart${part} Iniciado`)
@@ -58,57 +58,53 @@ function mergeText(a, b, c) {
     console.log(recognizedText) // Show the concatened text. 
 }
 
-//######## Refatorar ###########
-function findValues(recognizedText) {
-    //trata texto
-    let text = recognizedText;
+function formatText(data){
+    let text = data;
     text = text.replace(/\s/g, '');
     text = text.replace("'", '');
     text = text.replace('"', '');
+    formatedText = text;
+}
 
-    const regExp = [
-        /númerodesérie:\d{6}/i,
-        /RTDA:?\d{3},\d/i,
-        /RTD[5B8]?:\d{3},\d/i,
-        /correntedereferência:\d,\d{2}/i,
-        /correntelida:\d,\d{2}/i,
-        /1ma:\d{2}/i,
-        /[s5]ma:?\d{2}/i,
-        /10ma:?\d{2}/i,
-        /20ma:?\d{2}/i,
-    ]
+const regExp = [
+    /númerodesérie:\d{6}/i,
+    /RTDA:?\d{3},\d/i,
+    /RTD[5B8]?:\d{3},\d/i,
+    /correntedereferência:\d,\d{2}/i,
+    /correntelida:\d,\d{2}/i,
+    /1ma:\d{2}/i,
+    /[s5]ma:?\d{2}/i,
+    /10ma:?\d{2}/i,
+    /20ma:?\d{2}/i,
+]
 
+//######## Refatorar ###########
+function findValues(text) {
     let repeatCalibraçãoSaida = true;
     let repeatCalibraçãoTC = true;
+    
     for (let i = 0; i < regExp.length; i++) {
-        let valorEncontrado = regExp[i].exec(text);  //renomear valorEncontrado
-        if (valorEncontrado) {
-            valorEncontrado = valorEncontrado.toString();
-            if (i == 0) { console.log(valorEncontrado.slice(-6)) }
-            if (i == 1) { console.log(valorEncontrado.slice(-5)) }
-            if (i == 2) { console.log(valorEncontrado.slice(-5)) }
-            if (i == 3) { console.log(valorEncontrado.slice(-4)) }
-            if (i == 4) { console.log(valorEncontrado.slice(-4)) }
+        let result = regExp[i].exec(text); 
+        if (result) {
+            result = result.toString();
+            if (i == 0) { console.log(result.slice(-6)) }
+            if (i == 1) { console.log(result.slice(-5)) }
+            if (i == 2) { console.log(result.slice(-5)) }
+            if (i == 3) { console.log(result.slice(-4)) }
+            if (i == 4) { console.log(result.slice(-4)) }
+            if (i == 5) { console.log(result.slice(-2)) }
+            if (i == 6) { console.log(result.slice(-2)) }
+            if (i == 7) { console.log(result.slice(-2)) }
+            if (i == 8) { console.log(result.slice(-2)) }
             
-            if (i == 4 && repeatCalibraçãoTC) {
-                i = 2; 
-                repeatCalibraçãoTC = false;
-            }
+            if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
+            if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
 
-            if (i == 5) { console.log(valorEncontrado.slice(-2)) }
-            if (i == 6) { console.log(valorEncontrado.slice(-2)) }
-            if (i == 7) { console.log(valorEncontrado.slice(-2)) }
-            if (i == 8) { console.log(valorEncontrado.slice(-2)) }
-
-            if (i == 8 && repeatCalibraçãoSaida) {
-                i = 4; 
-                repeatCalibraçãoSaida = false;
-            }
-
-            text = text.replace(valorEncontrado, (chalk.bgGreen('#')))
-        } else if (valorEncontrado == undefined) {                        //Repensar para não floodar
+            text = text.replace(result, (chalk.bgGreen('#')))
+        } else if (result == undefined) {                        
             console.log(chalk.red('RegExp not found'))
         }
     }
     //console.log(text); //show where the date was obtained.
 }
+
