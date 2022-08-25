@@ -19,10 +19,10 @@ function main(image) {
     setTimeout(() => mergeText(part0, part1, part2), 35 * 1000);
     setTimeout(() => formatText(recognizedText), 36 * 1000);
     setTimeout(() => findValues(formatedText), 37 * 1000);
-    //setTimeout(() => writeCSV(arrValues), 38 * 1000); // Proxima passo.
+    setTimeout(() => writeTXT(arrValues), 38 * 1000);
 }
 
-main(img)
+//main(img)
 
 const croppedParts = {
     part0: [1, 20, 200, 30],
@@ -60,7 +60,7 @@ function mergeText(a, b, c) {
     //console.log(recognizedText) // Show the concatened text. 
 }
 
-function formatText(data){
+function formatText(data) {
     let text = data;
     text = text.replace(/\s/g, '');
     text = text.replace("'", '');
@@ -80,13 +80,12 @@ const regExp = [
     /20ma:?\d{2}/i,
 ]
 
-//######## Refatorar ###########
 function findValues(text) {
     let repeatCalibraçãoSaida = true;
     let repeatCalibraçãoTC = true;
 
     for (let i = 0; i < regExp.length; i++) {
-        let result = regExp[i].exec(text); 
+        let result = regExp[i].exec(text);
         if (result) {
             result = result.toString();
             if (i == 0) { arrValues.push(result.slice(-6)) }
@@ -98,13 +97,13 @@ function findValues(text) {
             if (i == 6) { arrValues.push(result.slice(-2)) }
             if (i == 7) { arrValues.push(result.slice(-2)) }
             if (i == 8) { arrValues.push(result.slice(-2)) }
-            
+
             if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
             if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
 
             text = text.replace(result, (chalk.bgGreen('#')))
-        } else if (result == undefined) {                        
-            arrValues.push('RegExp not found')
+        } else if (result == undefined) {
+            arrValues.push('Not_found')
         }
     }
     console.log(arrValues)
@@ -112,25 +111,46 @@ function findValues(text) {
 }
 
 
-let writeStream = fs.createWriteStream('./values.csv')
-function writeCSV(someArrayOfObjects){
 
-    someArrayOfObjects.forEach((someObject, index) => {     
-        let newLine = []
-        newLine.push(someObject.stringPropertyOne)
-        newLine.push(someObject.stringPropertyTwo)
-        
-    
-        writeStream.write(newLine.join(',')+ '\n', () => {
-            // a line was written to stream
-        })
-    })
-    
-    writeStream.end()
-    
-    writeStream.on('finish', () => {
-        console.log('finish write stream, moving along')
-    }).on('error', (err) => {
-        console.log(err)
-    })
+let teste1 = [
+    '065549', '103,1',
+    '103,4', '4,72',
+    '5,08', 'Not_found',
+    'Not_found', '56',
+    '55', '48',
+    '54', '61',
+    '56', '52',
+    '58'
+]
+
+let teste2 = {
+    1: '065549',
+    2: '103,1',
+    3: '103,4',
+    4: '4,72',
+    5: '5,08',
+    6: 'Not_found',
+    7: 'Not_found',
+    8: '56',
+    9: '55',
+    10: '54',
+    11: '56',
+    12: '58'
 }
+
+function writeTXT(arr) {
+    // fs.writeFile(('./values.txt'), header + '\n', 'utf8', function (err) {
+    //     if (err) throw err;
+    //     console.log('writed!');
+    // }
+    for (let i = 1; i < 3; i++) {
+        //arr.forEach(() => {
+        fs.appendFile(('./values.txt'), arr.join(" ") + '\n', 'utf8', function (err) {
+            if (err) throw err;
+            console.log('Appended!');
+
+            //});
+        })
+    }
+}
+writeTXT(teste1)
