@@ -10,6 +10,25 @@ let part2;
 let recognizedText;
 let formatedText;
 let arrValues = [];
+let textFilePath = ('./values.txt')
+
+const croppedParts = {
+    part0: [1, 20, 200, 30],
+    part1: [278, 100, 237, 460],
+    part2: [510, 100, 237, 460]
+}
+
+const regExp = {
+    'Serial'    : /númerodesérie:\d{6}/i,
+    'RTD-A'     : /RTDA:?\d{3},\d/i,
+    'RTD-B'     : /RTD[5B8]?:\d{3},\d/i,
+    'TC-CR'     : /correntedereferência:\d,\d{2}/i,
+    'TC-CL'     : /correntelida:\d,\d{2}/i,
+    'Saida-1mA' : /1ma:\d{2}/i,
+    'Saida-5mA' : /[s5]ma:?\d{2}/i,
+    'Saida-10mA': /10ma:?\d{2}/i,
+    'Saida-20mA': /20ma:?\d{2}/i,
+}
 
 function main(image) {
     cropImage(image);
@@ -19,15 +38,8 @@ function main(image) {
     setTimeout(() => mergeText(part0, part1, part2), 35 * 1000);
     setTimeout(() => formatText(recognizedText), 36 * 1000);
     setTimeout(() => findValues(formatedText), 37 * 1000);
-    setTimeout(() => writeTXT(arrValues), 38 * 1000);
-}
-
-//main(img)
-
-const croppedParts = {
-    part0: [1, 20, 200, 30],
-    part1: [278, 100, 237, 460],
-    part2: [510, 100, 237, 460]
+    setTimeout(() => writeTXT(), 38 * 1000);
+    setTimeout(() => appendTXT(arrValues), 39 * 1000);
 }
 
 async function cropImage(img) {
@@ -51,7 +63,7 @@ function ocrImage(part) {
         if (part == 0) { part0 = text };
         if (part == 1) { part1 = text };
         if (part == 2) { part2 = text };
-        console.log(`OCR croppedPart${part} Concluido`);
+        console.log(`OCR croppedPart${part} Concluido!`);
     })
 }
 
@@ -68,24 +80,12 @@ function formatText(data) {
     formatedText = text;
 }
 
-const regExp = [
-    /númerodesérie:\d{6}/i,
-    /RTDA:?\d{3},\d/i,
-    /RTD[5B8]?:\d{3},\d/i,
-    /correntedereferência:\d,\d{2}/i,
-    /correntelida:\d,\d{2}/i,
-    /1ma:\d{2}/i,
-    /[s5]ma:?\d{2}/i,
-    /10ma:?\d{2}/i,
-    /20ma:?\d{2}/i,
-]
-
 function findValues(text) {
     let repeatCalibraçãoSaida = true;
     let repeatCalibraçãoTC = true;
 
-    for (let i = 0; i < regExp.length; i++) {
-        let result = regExp[i].exec(text);
+    for (let i = 0; i < Object.keys(regExp).length; i++) {
+        let result = Object.values(regExp)[i].exec(text);
         if (result) {
             result = result.toString();
             if (i == 0) { arrValues.push(result.slice(-6)) }
@@ -103,49 +103,24 @@ function findValues(text) {
 
             text = text.replace(result, (chalk.bgGreen('#')))
         } else if (result == undefined) {
-            arrValues.push('Not_found')
+            arrValues.push('Null')
         }
     }
-    console.log(arrValues)
+    //console.log(arrValues)
     //console.log(text); //show where the date was obtained.
 }
 
-
-
-let teste1 = [
-    '065549', '103,1',
-    '103,4', '4,72',
-    '5,08', 'Not_found',
-    'Not_found', '56',
-    '55', '48',
-    '54', '61',
-    '56', '52',
-    '58'
-]
-
-let teste2 = {
-    1: '065549',
-    2: '103,1',
-    3: '103,4',
-    4: '4,72',
-    5: '5,08',
-    6: 'Not_found',
-    7: 'Not_found',
-    8: '56',
-    9: '55',
-    10: '54',
-    11: '56',
-    12: '58'
+function writeTXT() {
+    fs.writeFile(textFilePath, Object.keys(regExp).join(" ") + '\n', 'utf8', function (err) {
+        if (err) throw err;
+        console.log('writed!');
+    })
 }
 
-function writeTXT(arr) {
-    // fs.writeFile(('./values.txt'), header + '\n', 'utf8', function (err) {
-    //     if (err) throw err;
-    //     console.log('writed!');
-    // }
-    for (let i = 1; i < 3; i++) {
+function appendTXT(arr) {
+    for (let i = 0; i < 3; i++) {
         //arr.forEach(() => {
-        fs.appendFile(('./values.txt'), arr.join(" ") + '\n', 'utf8', function (err) {
+        fs.appendFile(textFilePath, arr.join(" ") + '\n', 'utf8', function (err) {
             if (err) throw err;
             console.log('Appended!');
 
@@ -153,4 +128,5 @@ function writeTXT(arr) {
         })
     }
 }
-writeTXT(teste1)
+
+main(img)
