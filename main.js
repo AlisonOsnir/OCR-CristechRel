@@ -3,22 +3,22 @@ import chalk from 'chalk';
 import Jimp from 'jimp';
 import * as fs from 'fs';
 
-let img = ('./images/img1.png'); // Ler varias fotos.
-let part0;
-let part1;
-let part2;
-let recognizedText;
-let formatedText;
-let arrValues = [];
-let textFilePath = ('./values.txt')
+const imagesDirectoryPath = './images/';
+const txtFilePath = './values.txt';
 
-const croppedParts = {
-    part0: [1, 20, 200, 30],
-    part1: [278, 100, 237, 460],
-    part2: [510, 100, 237, 460]
+const cropCoords = {
+    'part1' : [1, 20, 200, 30],
+    'part2' : [278, 100, 237, 460],
+    'part3' : [510, 100, 237, 460]
 }
 
-const regExp = {
+const headerTM = [
+'Serial', 'RTD-A', 'RTD-B', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL',
+'Saida_mA1-1mA','Saida_mA1-5mA','Saida_mA1-10mA','Saida_mA1-20mA',
+'Saida_mA2-1mA','Saida_mA2-5mA','Saida_mA2-10mA','Saida_mA2-20mA'
+]
+
+const regExpTM = {
     'Serial'    : /númerodesérie:\d{6}/i,
     'RTD-A'     : /RTDA:?\d{3},\d/i,
     'RTD-B'     : /RTD[5B8]?:\d{3},\d/i,
@@ -30,103 +30,122 @@ const regExp = {
     'Saida-20mA': /20ma:?\d{2}/i,
 }
 
-function main(image) {
-    cropImage(image);
-    setTimeout(() => ocrImage(0), 1 * 1000);
-    setTimeout(() => ocrImage(1), 8 * 1000);
-    setTimeout(() => ocrImage(2), 22 * 1000);
-    setTimeout(() => mergeText(part0, part1, part2), 35 * 1000);
-    setTimeout(() => formatText(recognizedText), 36 * 1000);
-    setTimeout(() => findValues(formatedText), 37 * 1000);
-    setTimeout(() => writeTXT(), 38 * 1000);
-    setTimeout(() => appendTXT(arrValues), 39 * 1000);
+let textPart1;
+let textPart2;
+let textPart3;
+let recognizedText;
+let formatedText;
+let arrValues = [];
+
+function callMain () {
+    fs.readdir(imagesDirectoryPath, (err, files) => {
+    if (err) throw err;
+    writeTXT(headerTM);
+    files.forEach( (file,i) => {
+        setTimeout( () => main(imagesDirectoryPath + file), i* 55000)});
+    })
+}
+
+function main(imagePath) {
+    setTimeout(() => cropImage(imagePath), 3 * 1000);;
+    setTimeout(() => ocrImage('part1'), 5 * 1000);
+    setTimeout(() => ocrImage('part2'), 15 * 1000);
+    setTimeout(() => ocrImage('part3'), 30 * 1000);
+    setTimeout(() => mergeText(textPart1, textPart2, textPart3), 45 * 1000);
+    setTimeout(() => formatText(), 46 * 1000);
+    setTimeout(() => findValues(), 47 * 1000);
+    setTimeout(() => appendTXT(), 49 * 1000);
 }
 
 async function cropImage(img) {
-    for (let i = 0; i < 3; i++) {
+    console.log(`>>> ImagePath: ${img}`);
+    for (let i = 1; i < 4; i++) {
         // Read the image.
         const image = await Jimp.read(img);
+        // Turn image to grayscale.
+        await image.grayscale()
         // Crop image.
-        await image.crop(...croppedParts[Object.keys(croppedParts)[i]]);
+        await image.crop(...cropCoords[Object.keys(cropCoords)[i-1]]);
         // Save and overwrite the image
-        await image.writeAsync(`images/cropped_images/cropped_part${i}.png`);
+        await image.writeAsync(`cropped_images/cropped_part${i}.png`);
     }
+    console.log('>>> Image Cropped.')
 }
 
 function ocrImage(part) {
-    console.log(`OCR croppedPart${part} Iniciado`)
+    console.log(`>>> OCR cropped ${part} Iniciado.`);
     Tesseract.recognize(
-        `images/cropped_images/cropped_part${part}.png`,
+        `cropped_images/cropped_${part}.png`,
         'por',
         //{ logger: m => console.log(m) }
     ).then(({ data: { text } }) => {
-        if (part == 0) { part0 = text };
-        if (part == 1) { part1 = text };
-        if (part == 2) { part2 = text };
-        console.log(`OCR croppedPart${part} Concluido!`);
+        if (part == 'part1') { textPart1 = text };
+        if (part == 'part2') { textPart2 = text };
+        if (part == 'part3') { textPart3 = text };
+        console.log(`>>> OCR cropped ${part} Concluido.`);
     })
 }
 
 function mergeText(a, b, c) {
     recognizedText = (a + b + c);
-    //console.log(recognizedText) // Show the concatened text. 
+    //console.log(recognizedText)  //Show the concatened text. 
 }
 
-function formatText(data) {
-    let text = data;
+function formatText() {
+    let text = recognizedText;
     text = text.replace(/\s/g, '');
     text = text.replace("'", '');
     text = text.replace('"', '');
     formatedText = text;
+    recognizedText = '';
 }
 
-function findValues(text) {
+function findValues() {
     let repeatCalibraçãoSaida = true;
     let repeatCalibraçãoTC = true;
 
-    for (let i = 0; i < Object.keys(regExp).length; i++) {
-        let result = Object.values(regExp)[i].exec(text);
+    for (let i = 0; i < Object.keys(regExpTM).length; i++) {
+        let result = Object.values(regExpTM)[i].exec(formatedText);
         if (result) {
             result = result.toString();
-            if (i == 0) { arrValues.push(result.slice(-6)) }
-            if (i == 1) { arrValues.push(result.slice(-5)) }
-            if (i == 2) { arrValues.push(result.slice(-5)) }
-            if (i == 3) { arrValues.push(result.slice(-4)) }
-            if (i == 4) { arrValues.push(result.slice(-4)) }
-            if (i == 5) { arrValues.push(result.slice(-2)) }
-            if (i == 6) { arrValues.push(result.slice(-2)) }
-            if (i == 7) { arrValues.push(result.slice(-2)) }
-            if (i == 8) { arrValues.push(result.slice(-2)) }
+            if (i == 0) { arrValues.push(result.slice(-6)) };
+            if (i == 1) { arrValues.push(result.slice(-5)) };
+            if (i == 2) { arrValues.push(result.slice(-5)) };
+            if (i == 3) { arrValues.push(result.slice(-4)) };
+            if (i == 4) { arrValues.push(result.slice(-4)) };
+            if (i == 5) { arrValues.push(result.slice(-2)) };
+            if (i == 6) { arrValues.push(result.slice(-2)) };
+            if (i == 7) { arrValues.push(result.slice(-2)) };
+            if (i == 8) { arrValues.push(result.slice(-2)) };
 
-            if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
-            if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
+            if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; };
+            if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; };
 
-            text = text.replace(result, (chalk.bgGreen('#')))
+            formatedText = formatedText.replace(result, (chalk.bgGreen('###')));
         } else if (result == undefined) {
-            arrValues.push('Null')
+            arrValues.push('N/A');
+            //console.log(chalk.red('regExp not found'));
         }
     }
-    //console.log(arrValues)
-    //console.log(text); //show where the date was obtained.
+    formatedText = '';
+    //console.log(arrValues)    //show the values push to array.
+    //console.log(text);        //show where the date was obtained.
 }
 
-function writeTXT() {
-    fs.writeFile(textFilePath, Object.keys(regExp).join(" ") + '\n', 'utf8', function (err) {
+function writeTXT(header) {
+    fs.writeFile(txtFilePath, header.join(" ") + '\n', 'utf8', function (err) {
         if (err) throw err;
-        console.log('writed!');
+        console.log('\n>>> Header writed to textFile.\n');
     })
 }
 
-function appendTXT(arr) {
-    for (let i = 0; i < 3; i++) {
-        //arr.forEach(() => {
-        fs.appendFile(textFilePath, arr.join(" ") + '\n', 'utf8', function (err) {
-            if (err) throw err;
-            console.log('Appended!');
-
-            //});
-        })
-    }
+function appendTXT() {
+    fs.appendFile(txtFilePath, arrValues.join(" ") + '\n', 'utf8', function (err) {
+        if (err) throw err;
+        console.log('>>> Values Appended to textFile.\n');
+    })
+    arrValues = [];
 }
 
-main(img)
+
+callMain()
