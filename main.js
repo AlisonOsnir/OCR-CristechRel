@@ -37,28 +37,34 @@ let recognizedText;
 let formatedText;
 let arrValues = [];
 
-function callMain () {
+function startProgram () {
     fs.readdir(imagesDirectoryPath, (err, files) => {
-    if (err) throw err;
-    writeTXT(headerTM);
-    files.forEach( (file,i) => {
-        setTimeout( () => main(imagesDirectoryPath + file), i* 55000)});
+        if (err) throw err;
+        
+        console.log(chalk.bgGreen('>>>      Starting Program      <<<\n'))
+        writeTXT(headerTM);
+        
+        files.forEach( (file,i) => {
+            setTimeout( () => counterImagesLog(i, files), i * 60000);
+            setTimeout( () => main(imagesDirectoryPath + file), i * 60000);
+            if (i === files.length - 1) {setTimeout( () => finishLog(), ((i + 1) * 60000))};
+        })
     })
 }
 
 function main(imagePath) {
     setTimeout(() => cropImage(imagePath), 3 * 1000);;
-    setTimeout(() => ocrImage('part1'), 5 * 1000);
-    setTimeout(() => ocrImage('part2'), 15 * 1000);
+    setTimeout(() => ocrImage('part1'), 6 * 1000);
+    setTimeout(() => ocrImage('part2'), 16 * 1000);
     setTimeout(() => ocrImage('part3'), 30 * 1000);
-    setTimeout(() => mergeText(textPart1, textPart2, textPart3), 45 * 1000);
-    setTimeout(() => formatText(), 46 * 1000);
-    setTimeout(() => findValues(), 47 * 1000);
-    setTimeout(() => appendTXT(), 49 * 1000);
+    setTimeout(() => mergeText(textPart1, textPart2, textPart3), 53 * 1000);
+    setTimeout(() => formatText(), 54 * 1000);
+    setTimeout(() => findValues(), 55 * 1000);
+    setTimeout(() => appendTXT(), 56 * 1000);
 }
 
 async function cropImage(img) {
-    console.log(`>>> ImagePath: ${img}`);
+    console.log(chalk.blue(`>>> ImagePath: ${img}`));
     for (let i = 1; i < 4; i++) {
         // Read the image.
         const image = await Jimp.read(img);
@@ -73,7 +79,7 @@ async function cropImage(img) {
 }
 
 function ocrImage(part) {
-    console.log(`>>> OCR cropped ${part} Iniciado.`);
+    console.log(`>>> OCR cropped ${part} Iniciado`);
     Tesseract.recognize(
         `cropped_images/cropped_${part}.png`,
         'por',
@@ -82,7 +88,7 @@ function ocrImage(part) {
         if (part == 'part1') { textPart1 = text };
         if (part == 'part2') { textPart2 = text };
         if (part == 'part3') { textPart3 = text };
-        console.log(`>>> OCR cropped ${part} Concluido.`);
+        console.log(`>>> OCR cropped ${part} Concluido`);
     })
 }
 
@@ -98,6 +104,7 @@ function formatText() {
     text = text.replace('"', '');
     formatedText = text;
     recognizedText = '';
+    console.log('>>> Text Formated.')
 }
 
 function findValues() {
@@ -135,17 +142,24 @@ function findValues() {
 function writeTXT(header) {
     fs.writeFile(txtFilePath, header.join(" ") + '\n', 'utf8', function (err) {
         if (err) throw err;
-        console.log('\n>>> Header writed to textFile.\n');
+        console.log(chalk.blue('>>> Header writed to textFile.\n'));
     })
 }
 
 function appendTXT() {
     fs.appendFile(txtFilePath, arrValues.join(" ") + '\n', 'utf8', function (err) {
         if (err) throw err;
-        console.log('>>> Values Appended to textFile.\n');
+        console.log(chalk.blue('>>> Values Appended to textFile.\n'));
     })
     arrValues = [];
 }
 
+function counterImagesLog(index, files) {
+    console.log(chalk.green(`>>> ImagesCounter: ${index + 1}/${files.length}`));
+}
 
-callMain()
+function finishLog() {   
+    console.log(chalk.bgGreen('>>>      Program Finished      <<<\n'));
+}
+
+startProgram()

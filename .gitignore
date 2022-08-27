@@ -1,1 +1,4 @@
-node_modules
+node_modules 
+values.txt
+*.trainedddata
+cropped_part[123].png
