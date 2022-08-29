@@ -41,13 +41,13 @@ function startProgram () {
     fs.readdir(imagesDirectoryPath, (err, files) => {
         if (err) throw err;
         
-        console.log(chalk.bgGreen('>>>      Starting Program      <<<\n'))
+        console.log(chalk.bgGreen('>>>     Starting Program     <<<\n'));
         writeTXT(headerTM);
         
         files.forEach( (file,i) => {
-            setTimeout( () => counterImagesLog(i, files), i * 60000);
-            setTimeout( () => main(imagesDirectoryPath + file), i * 60000);
-            if (i === files.length - 1) {setTimeout( () => finishLog(), ((i + 1) * 60000))};
+            setTimeout( _ => counterImagesLog(i, files), i * 60000);
+            setTimeout( _ => main(imagesDirectoryPath + file), i * 60000);
+            if (i === files.length - 1) {setTimeout( _ => finishLog(), (i + 1) * 60000)};
         })
     })
 }
@@ -69,9 +69,9 @@ async function cropImage(img) {
         // Read the image.
         const image = await Jimp.read(img);
         // Turn image to grayscale.
-        await image.grayscale()
+        image.grayscale()
         // Crop image.
-        await image.crop(...cropCoords[Object.keys(cropCoords)[i-1]]);
+        image.crop(...cropCoords[Object.keys(cropCoords)[i - 1]]);
         // Save and overwrite the image
         await image.writeAsync(`cropped_images/cropped_part${i}.png`);
     }
@@ -85,15 +85,15 @@ function ocrImage(part) {
         'por',
         //{ logger: m => console.log(m) }
     ).then(({ data: { text } }) => {
-        if (part == 'part1') { textPart1 = text };
-        if (part == 'part2') { textPart2 = text };
-        if (part == 'part3') { textPart3 = text };
+        if (part == 'part1') textPart1 = text;
+        if (part == 'part2') textPart2 = text;
+        if (part == 'part3') textPart3 = text;
         console.log(`>>> OCR cropped ${part} Concluido`);
     })
 }
 
 function mergeText(a, b, c) {
-    recognizedText = (a + b + c);
+    recognizedText = a + b + c;
     //console.log(recognizedText)  //Show the concatened text. 
 }
 
@@ -115,15 +115,15 @@ function findValues() {
         let result = Object.values(regExpTM)[i].exec(formatedText);
         if (result) {
             result = result.toString();
-            if (i == 0) { arrValues.push(result.slice(-6)) };
-            if (i == 1) { arrValues.push(result.slice(-5)) };
-            if (i == 2) { arrValues.push(result.slice(-5)) };
-            if (i == 3) { arrValues.push(result.slice(-4)) };
-            if (i == 4) { arrValues.push(result.slice(-4)) };
-            if (i == 5) { arrValues.push(result.slice(-2)) };
-            if (i == 6) { arrValues.push(result.slice(-2)) };
-            if (i == 7) { arrValues.push(result.slice(-2)) };
-            if (i == 8) { arrValues.push(result.slice(-2)) };
+            if (i == 0) arrValues.push(result.slice(-6));
+            if (i == 1) arrValues.push(result.slice(-5));
+            if (i == 2) arrValues.push(result.slice(-5));
+            if (i == 3) arrValues.push(result.slice(-4));
+            if (i == 4) arrValues.push(result.slice(-4));
+            if (i == 5) arrValues.push(result.slice(-2));
+            if (i == 6) arrValues.push(result.slice(-2));
+            if (i == 7) arrValues.push(result.slice(-2));
+            if (i == 8) arrValues.push(result.slice(-2));
 
             if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; };
             if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; };
@@ -159,7 +159,7 @@ function counterImagesLog(index, files) {
 }
 
 function finishLog() {   
-    console.log(chalk.bgGreen('>>>      Program Finished      <<<\n'));
+    console.log(chalk.bgGreen('>>>     Program Finished     <<<\n'));
 }
 
 startProgram()
