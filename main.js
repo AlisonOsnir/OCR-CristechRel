@@ -1,9 +1,9 @@
-import Tesseract from 'tesseract.js';
+import { createWorker } from 'tesseract.js'
 import chalk from 'chalk';
 import Jimp from 'jimp';
 import * as fs from 'fs';
 
-const imagesDirectoryPath = './images/';
+const imagesDirPath = './images/';
 const txtFilePath = './values.txt';
 
 const cropCoords = {
@@ -30,38 +30,24 @@ const regExpTM = {
     'Saida-20mA': /20ma:?\d{2}/i,
 }
 
-let textPart1;
-let textPart2;
-let textPart3;
-let recognizedText;
-let formatedText;
-let arrValues = [];
 
-function startProgram () {
-    fs.readdir(imagesDirectoryPath, (err, files) => {
-        if (err) throw err;
-        
-        console.log(chalk.bgGreen('>>>     Starting Program     <<<\n'));
-        writeTXT(headerTM);
-        
+//async function execProgram () {
+    startingLog();
+    writeValuesHeader(headerTM);
+
+    fs.readdir(imagesDirPath, (err, files) => {
+        if (err) {
+            return console.log('Unable to scan directory: ' + err);
+        }
+    
         files.forEach( (file,i) => {
-            setTimeout( _ => counterImagesLog(i, files), i * 60000);
-            setTimeout( _ => main(imagesDirectoryPath + file), i * 60000);
-            if (i === files.length - 1) {setTimeout( _ => finishLog(), (i + 1) * 60000)};
+            counterImagesLog(i, files)
+            //main(imagesDirPath + file) // ERROR 
+            console.log(file)
+            if (i === files.length - 1) finishLog();
         })
     })
-}
-
-function main(imagePath) {
-    setTimeout(() => cropImage(imagePath), 3 * 1000);;
-    setTimeout(() => ocrImage('part1'), 6 * 1000);
-    setTimeout(() => ocrImage('part2'), 16 * 1000);
-    setTimeout(() => ocrImage('part3'), 30 * 1000);
-    setTimeout(() => mergeText(textPart1, textPart2, textPart3), 53 * 1000);
-    setTimeout(() => formatText(), 54 * 1000);
-    setTimeout(() => findValues(), 55 * 1000);
-    setTimeout(() => appendTXT(), 56 * 1000);
-}
+//}
 
 async function cropImage(img) {
     console.log(chalk.blue(`>>> ImagePath: ${img}`));
@@ -78,80 +64,54 @@ async function cropImage(img) {
     console.log('>>> Image Cropped.')
 }
 
-function ocrImage(part) {
-    console.log(`>>> OCR cropped ${part} Iniciado`);
-    Tesseract.recognize(
-        `cropped_images/cropped_${part}.png`,
-        'por',
-        //{ logger: m => console.log(m) }
-    ).then(({ data: { text } }) => {
-        if (part == 'part1') textPart1 = text;
-        if (part == 'part2') textPart2 = text;
-        if (part == 'part3') textPart3 = text;
-        console.log(`>>> OCR cropped ${part} Concluido`);
-    })
-}
-
-function mergeText(a, b, c) {
-    recognizedText = a + b + c;
-    //console.log(recognizedText)  //Show the concatened text. 
-}
-
-function formatText() {
-    let text = recognizedText;
-    text = text.replace(/\s/g, '');
-    text = text.replace("'", '');
-    text = text.replace('"', '');
-    formatedText = text;
-    recognizedText = '';
-    console.log('>>> Text Formated.')
-}
-
-function findValues() {
+function getValues(text) {
     let repeatCalibraçãoSaida = true;
     let repeatCalibraçãoTC = true;
+    const arr = [];
 
     for (let i = 0; i < Object.keys(regExpTM).length; i++) {
-        let result = Object.values(regExpTM)[i].exec(formatedText);
+        let result = Object.values(regExpTM)[i].exec(text);
         if (result) {
             result = result.toString();
-            if (i == 0) arrValues.push(result.slice(-6));
-            if (i == 1) arrValues.push(result.slice(-5));
-            if (i == 2) arrValues.push(result.slice(-5));
-            if (i == 3) arrValues.push(result.slice(-4));
-            if (i == 4) arrValues.push(result.slice(-4));
-            if (i == 5) arrValues.push(result.slice(-2));
-            if (i == 6) arrValues.push(result.slice(-2));
-            if (i == 7) arrValues.push(result.slice(-2));
-            if (i == 8) arrValues.push(result.slice(-2));
+            if (i == 0) arr.push(result.slice(-6));
+            if (i == 1) arr.push(result.slice(-5));
+            if (i == 2) arr.push(result.slice(-5));
+            if (i == 3) arr.push(result.slice(-4));
+            if (i == 4) arr.push(result.slice(-4));
+            if (i == 5) arr.push(result.slice(-2));
+            if (i == 6) arr.push(result.slice(-2));
+            if (i == 7) arr.push(result.slice(-2));
+            if (i == 8) arr.push(result.slice(-2));
 
             if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; };
             if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; };
 
-            formatedText = formatedText.replace(result, (chalk.bgGreen('###')));
+            text = text.replace(result, (chalk.bgGreen('###')));
         } else if (result == undefined) {
-            arrValues.push('N/A');
+            arr.push('N/A');
             //console.log(chalk.red('regExp not found'));
         }
     }
-    formatedText = '';
-    //console.log(arrValues)    //show the values push to array.
-    //console.log(text);        //show where the date was obtained.
+    //console.log(arr);
+    //console.log(text);
+    console.log('>>> The values were found.')
+    return arr
 }
 
-function writeTXT(header) {
+function writeValuesHeader(header) {
     fs.writeFile(txtFilePath, header.join(" ") + '\n', 'utf8', function (err) {
         if (err) throw err;
         console.log(chalk.blue('>>> Header writed to textFile.\n'));
     })
 }
 
-function appendTXT() {
+async function appendValues(arrValues) {
+    let arr = [];
     fs.appendFile(txtFilePath, arrValues.join(" ") + '\n', 'utf8', function (err) {
         if (err) throw err;
         console.log(chalk.blue('>>> Values Appended to textFile.\n'));
+        return arr
     })
-    arrValues = [];
 }
 
 function counterImagesLog(index, files) {
@@ -159,7 +119,58 @@ function counterImagesLog(index, files) {
 }
 
 function finishLog() {   
-    console.log(chalk.bgGreen('>>>     Program Finished     <<<\n'));
+    console.log(chalk.bgGreen('\n>>>     Program Finished     <<<\n'));
 }
 
-startProgram()
+function startingLog() {
+    console.log(chalk.bgGreen('>>>     Starting Program     <<<\n'));
+}
+
+async function ocrImage(part) {
+    console.log(`>>> OCR cropped ${part} Iniciado`);
+    try {
+        const worker = createWorker({
+        //logger: m => console.log(m), // Add logger here
+        });
+
+        await worker.load();
+        await worker.loadLanguage('por');
+        await worker.initialize('por');
+        const { data: { text } } = await worker.recognize(`./cropped_images/cropped_${part}.png`);
+        //console.log(text);
+        await worker.terminate();
+        return new Promise((resolve, reject) => {
+            resolve(text)
+        })
+    } catch(error) {
+        console.log("error" + error);
+    } finally {
+        console.log(`>>> OCR cropped ${part} Concluido`);
+    }
+}
+
+function processData (a, b, c) {
+    let text = ( a + b + c )
+    text = text.replace(/\s/g, '');
+    text = text.replace("'", '');
+    text = text.replace('"', '');
+    console.log('>>> Data processed.')
+    return text
+}
+
+async function main(imagePath) {
+    try {
+        await cropImage(imagePath)
+        let crop1 = await ocrImage('part1')
+        let crop2 = await ocrImage('part2')
+        let crop3 = await ocrImage('part3')
+        let text = processData(crop1, crop2, crop3)
+        let values = getValues(text)
+        await appendValues(values)
+    } catch (error) {
+        console.log('error:', error)
+    }
+}
+
+//main('./images/img1.png')   // Teste em uma unica imagem
+//execProgram ()

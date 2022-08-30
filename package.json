@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "chalk": "^5.0.1",
+    "fs.promises": "^0.1.2",
     "jimp": "^0.16.1",
     "tesseract.js": "^2.1.5"
   }
