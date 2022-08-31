@@ -30,24 +30,20 @@ const regExpTM = {
   'Saida-20mA': /20ma:?\d{2}/i,
 }
 
-
 async function cropImage(img) {
   console.log(chalk.blue(`>>> ImagePath: ${img}`));
   for (let i = 1; i < 4; i++) {
-    // Read the image.
     const image = await Jimp.read(img);
-    // Turn image to grayscale.
     image.grayscale()
-    // Crop image.
     image.crop(...cropCoords[Object.keys(cropCoords)[i - 1]]);
-    // Save and overwrite the image
     await image.writeAsync(`cropped_images/cropped_part${i}.png`);
   }
-  console.log('>>> Image Cropped.')
+  console.log('>>> cropImage Done.')
 }
 
 async function ocrImage(part) {
-  console.log(`>>> OCR cropped ${part} Iniciado`);
+  console.log(`>>> OCR cropped_${part} Start`);
+
   try {
     const worker = createWorker({
       //logger: m => console.log(m), // Add logger here
@@ -65,17 +61,20 @@ async function ocrImage(part) {
   } catch (error) {
     console.log("error" + error);
   } finally {
-    console.log(`>>> OCR cropped ${part} Concluido`);
+    console.log(`>>> OCR cropped_${part} Done.`);
   }
+  sleep(6000);
 }
 
 function processData(a, b, c) {
-  let text = (a + b + c)
+  let text = (a + b + c);
+  if (!text) throw TypeError;
   text = text.replace(/\s/g, '');
   text = text.replace("'", '');
   text = text.replace('"', '');
-  console.log('>>> Data processed.')
-  return text
+  console.log('>>> Data process Done.');
+  return text;
+
 }
 
 function getValues(text) {
@@ -108,24 +107,24 @@ function getValues(text) {
   }
   //console.log(arr);
   //console.log(text);
-  console.log('>>> The values were found.')
+  console.log('>>> getValues Done.')
   return arr
 }
 
 async function appendValues(arrValues) {
-  let arr = [];
   fs.appendFile(txtFilePath, arrValues.join(" ") + '\n', 'utf8', function (err) {
     if (err) throw err;
-    console.log(chalk.blue('>>> Values Appended to textFile.\n'));
-    return arr
   })
+
+  //sleep(6000)
+  console.log(chalk.green('>>> Values Appended to textFile.\n'));
 }
 
-function writeValuesHeader(header) {
+function writeHeader(header) {
   fs.writeFile(txtFilePath, header.join(" ") + '\n', 'utf8', function (err) {
     if (err) throw err;
-    console.log(chalk.blue('>>> Header writed to textFile.\n'));
   })
+  console.log(chalk.green('>>> Header writed to textFile.\n'));
 }
 
 function counterImagesLog(index, files) {
@@ -136,8 +135,15 @@ function startingLog() {
   console.log(chalk.bgGreen('>>>     Starting Program     <<<\n'));
 }
 
-function finishLog() {
-  console.log(chalk.bgGreen('\n>>>     Program Finished     <<<\n'));
+async function finishLog() {
+  await sleep(5000);
+  console.log(chalk.bgGreen('>>>     Program Finished     <<<\n'));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 async function main(imagePath) {
@@ -154,68 +160,27 @@ async function main(imagePath) {
   }
 }
 
-// async function execProgram() {
-//   startingLog();
-//   writeValuesHeader(headerTM);
-
-//   fs.readdir(imagesDirPath, (err, files) => {
-//     if (err) {
-//       return console.log('Unable to scan directory: ' + err);
-//     }
-
-//     files.forEach((file, i) => {
-//       counterImagesLog(i, files)
-//       console.log(file)
-//       main(imagesDirPath + file) // ERROR 
-//       if (i === files.length - 1) finishLog();
-//     })
-//   })
-// }
- //////////////////////////////////////////////////////////////////////
-
- async function ls(path) {
-  const dir = await fs.promises.opendir(path)
-  for await (const dirent of dir) {
-    console.log(dirent.name)
-  }
-}
-
-ls('.').catch(console.error)
-
-///////////////////////////////////////////////////////////////////////
-
 (async () => {
-  // Our starting point
   try {
+    startingLog();
+    writeHeader(headerTM);
+
     // Get the files as an array
-    const files = await fs.promises.readdir(moveFrom);
+    const files = await fs.promises.readdir(imagesDirPath, (err) => {
+      if (err) return console.log('Unable to scan directory: ' + err)
+    });
 
-    // Loop them all with the new for...of
+    // Loop them all with for...of
     for (const file of files) {
-      
-      // Stat the file to see if we have a file or dir
-      const stat = await fs.promises.stat(fromPath);
-
-      if (stat.isFile())
-        console.log("'%s' is a file.", fromPath);
-      else if (stat.isDirectory())
-        console.log("'%s' is a directory.", fromPath);
-
-      await fs.promises.readdir(fromPath, toPath);
-
-    } // End for...of
+      //counterImagesLog(i, files);
+      await main(imagesDirPath + file)
+    }
   }
   catch (error) {
-    // Catch anything bad that happens
-    console.error("We've thrown! Whoops!", error);
+    console.error("Error:", error);
+  } finally {
+    finishLog();
   }
-
 })(); // Wrap in parenthesis and call now
 
-
-finishLog();
-
-
-
-//main('./images/img1.png')   // Teste em uma unica imagem
-//execProgram ()
+//main('./images/img1.png')   // Teste main em uma unica imagem.
