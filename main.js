@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import Jimp from 'jimp';
 import * as fs from 'fs';
 
-const imagesDirPath = './images/';
+const imagesDirPath = '../teste/';
 const txtFilePath = './values.txt';
 
 const cropCoords = {
@@ -20,11 +20,11 @@ const headerTM = [
 
 const regExpTM = {
   'Serial': /númerodesérie:\d{6}/i,
-  'RTD-A': /RTDA:?\d{3},\d/i,
-  'RTD-B': /RTD[5B8]?:\d{3},\d/i,
-  'TC-CR': /correntedereferência:\d,\d{2}/i,
-  'TC-CL': /correntelida:\d,\d{2}/i,
-  'Saida-1mA': /1ma:\d{2}/i,
+  'RTD-A': /RTDA:?\d{3}(?:,\d)?/i,                             
+  'RTD-B': /RTD[5B8]?:\d{3}(?:,\d)?/i,                        
+  'TC-CR': /correntedereferência:(?:\d,\d{2})|(?:n\/a)/i,     
+  'TC-CL': /correntelida:(?:\d,\d{2})|(?:n\/a)/i,             
+  'Saida-1mA': /[1i]ma:\d{2}/i,                              
   'Saida-5mA': /[s5]ma:?\d{2}/i,
   'Saida-10mA': /10ma:?\d{2}/i,
   'Saida-20mA': /20ma:?\d{2}/i,
@@ -56,7 +56,7 @@ async function ocrImage(part) {
   console.log(`>>> OCR cropped_${part} Start`);
   try {
     const worker = createWorker({
-      //logger: m => console.log(m), // Add logger here
+      //logger: m => console.log(m),
     });
     await worker.load();
     await worker.loadLanguage('por');
@@ -70,12 +70,11 @@ async function ocrImage(part) {
   } finally {
     console.log(`>>> OCR cropped_${part} Done.`);
   }
-  sleep(6000);
 };
 
 function processData(text1, text2, text3) {
   let data = (text1 + text2 + text3);
-  if (!data) throw new Error('ProcessData must receive string type');              // REFATORAR Se typeof text1, text2 ou text3... não for string
+  if (!data) throw new Error('ProcessData must receive string type');   // REFATORAR Erro se typeof text1, text2 ou text3... não for string
   data = data.replace(/\s/g, '');
   data = data.replace("'", '');
   data = data.replace('"', '');
@@ -89,13 +88,13 @@ function getValues(text) {
   const arr = [];
   let acc = 0;
 
-  for (let i = 0; i < Object.keys(regExpTM).length; i++) {       //REFATORAR TIPO DE LOOP
+  for (let i = 0; i < Object.keys(regExpTM).length; i++) {             //REFATORAR TIPO DE LOOP
     let result = Object.values(regExpTM)[i].exec(text);
     if (result) {
       result = result.toString();
       if (i == 0) arr.push(result.slice(-6));
-      if (i == 1) arr.push(result.slice(-5));
-      if (i == 2) arr.push(result.slice(-5));
+      if (i == 1) result.length < 9 ? arr.push(result.slice(-3)) : arr.push(result.slice(-5));    
+      if (i == 2) result.length < 9 ? arr.push(result.slice(-3)) : arr.push(result.slice(-5));
       if (i == 3) arr.push(result.slice(-4));
       if (i == 4) arr.push(result.slice(-4));
       if (i == 5) arr.push(result.slice(-2));
@@ -108,12 +107,12 @@ function getValues(text) {
 
       text = text.replace(result, (chalk.bgGreen('###')));
     } else if (result == undefined) {
-      acc++;
-      arr.push('N/A');     //arr.push('#ERROR#')      //Deveria aceitar n/a ou o valor (regexp)
+      acc++;   
+      arr.push('#ERROR#');    
     }
   }
-  console.error(chalk.red(`>>> ${acc} regExp not found.`));
   console.log('>>> getValues Done.');
+  if(acc) { console.error(chalk.red(`### ${acc} regExp not found.`))};
   return arr;
 };
 
@@ -176,10 +175,8 @@ async function main(imagePath) {
       await main(imagesDirPath + file);
     }
   } catch (error) {
-    console.error('failed to init the program: ', error);
+    console.error('fail to run the program: ', error);
   } finally {
     finishLog();
   }
 })(); // Wrap in parenthesis and call now
-
-//main('./images/img1.png')   // Teste main em uma unica imagem.
