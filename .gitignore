@@ -2,5 +2,3 @@ node_modules
 values.txt
 *.trainedddata
 /cropped_images/cropped_part[123].png
-values.txt
-por.traineddata
