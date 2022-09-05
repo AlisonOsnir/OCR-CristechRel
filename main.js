@@ -126,7 +126,7 @@ async function appendValues(arrValues) {
 };
 
 function startingLog() {
-  console.log(chalk.bgGreen('>>>     Starting Program     <<<\n'));
+  console.log(chalk.bgGreen('>>>         Starting Program         <<<\n'));
 };
 
 let counter = 1;
@@ -136,8 +136,8 @@ function counterImagesLog(files) {
 };
 
 function finishLog() {
-  sleep(5000);
-  console.log(chalk.bgGreen('>>>     Program Finished     <<<\n'));
+  sleep(10000);
+  console.log(chalk.bgGreen('>>>         Program Finished         <<<\n'));
 };
 
 function sleep(ms) {
