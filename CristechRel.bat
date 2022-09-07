@@ -1,5 +1,5 @@
 ECHO 'Iniciando OCR-CristechRel'
 
-cd Desktop\OCR-CristechRel
+cd ./
 
 start node main.js

@@ -1,4 +1,4 @@
 node_modules 
 cropped_images
-*.trainedddata
+/*.trainedddata
 values.txt
