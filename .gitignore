@@ -1,4 +1,5 @@
 node_modules 
 cropped_images
-/*.trainedddata
 values.txt
+por.traineddata
+eng.traineddata
