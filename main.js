@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import Jimp from 'jimp'
 import * as fs from 'fs'
 
-const imagesDirPath = '../teste/'
+const imagesDirPath = './images/'
 const txtFilePath = './values.txt'
 
 const cropCoords = {
@@ -19,28 +19,28 @@ const headerTM = [
 ]
 
 const handFillFields = {
-  'Produto'    : '""',
-  'VersãoFW'   : '""',
-  'TCExterno'  : '""',
-  'Data'       : '""',
-  'Responsavel': '""',
-  'Verify-1to9': 'OK',
-  'Reles'      : 'OK',
-  'I(MA)'      : 'OK',
-  'I(A)'       : 'OK',
-  'RS232/485'  : 'OK',
+  'Produto'     : '""',
+  'VersãoFW'    : '""',
+  'TCExterno'   : '""',
+  'Data'        : '""',
+  'Responsavel' : '""',
+  'Verify-1to9' : 'OK',
+  'Reles'       : 'OK',
+  'I(MA)'       : 'OK',
+  'I(A)'        : 'OK',
+  'RS232/485'   : 'OK',
   'Burn-in(IN)' :'18:00',
   'Burn-in(Out)':'06:00'
 }
 
 const regExpTM = {
-  'Serial': /númerodesérie:\d{6}/i,
-  'RTD-A': /RTDA:?\d{3}(?:,\d)?/i,
-  'RTD-B': /RTD[5B8]?:\d{3}(?:,\d)?/i,
-  'TC-CR': /correntedereferência:(?:\d,\d{2})|(?:n\/a)/i,
-  'TC-CL': /correntelida:(?:\d,\d{2})|(?:n\/a)/i,
-  'Saida-1mA': /[1i]ma:\d{2}/i,
-  'Saida-5mA': /[s5]ma:?\d{2}/i,
+  'Serial'    : /númerodesérie:\d{6}/i,
+  'RTD-A'     : /RTDA:?\d{3}(?:,\d)?/i,
+  'RTD-B'     : /RTD[5B8]?:\d{3}(?:,\d)?/i,
+  'TC-CR'     : /correntedereferência:(?:\d,\d{2})|(?:n\/a)/i,
+  'TC-CL'     : /correntelida:(?:\d,\d{2})|(?:n\/a)/i,
+  'Saida-1mA' : /[1i]ma:\d{2}/i,
+  'Saida-5mA' : /[s5]ma:?\d{2}/i,
   'Saida-10mA': /10ma:?\d{2}/i,
   'Saida-20mA': /20ma:?\d{2}/i,
 }
@@ -95,7 +95,7 @@ async function ocrImage(part) {
 
 function processData(text1, text2, text3) {
   let data = (text1 + text2 + text3)
-  if (!data) throw new Error('ProcessData must receive string type')   // REFATORAR Erro se typeof text1, text2 ou text3... não for string
+  if (!data) throw new Error('ProcessData must receive a string')
   data = data.replace(/\s/g, '')
   data = data.replace("'", '')
   data = data.replace('"', '')
