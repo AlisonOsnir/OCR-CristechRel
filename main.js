@@ -2,9 +2,11 @@ import { createWorker } from 'tesseract.js'
 import chalk from 'chalk'
 import Jimp from 'jimp'
 import * as fs from 'fs'
+import xlsx from 'xlsx';
 
-const imagesDirPath = './images/'
-const txtFilePath = './values.txt'
+const imagesDirPath = './images_test/'
+const tsvFilePath = './outputs/values.tsv'
+const xlsFilePath = './outputs/output.xls'
 
 const cropCoords = {
   'part1': [1, 20, 200, 30],
@@ -20,7 +22,7 @@ const headerTM = [
 
 const handFillFields = {
   'Produto'     : '""',
-  'VersãoFW'    : '""',
+  'VersaoFW'    : '""',
   'TCExterno'   : '""',
   'Data'        : '""',
   'Responsavel' : '""',
@@ -52,20 +54,20 @@ function addHandFillHeader(to) {
 }
 
 function writeHeader(header) {
-  fs.writeFile(txtFilePath, header.join(" ") + '\n', 'utf8', (err) => {
+  fs.writeFile(tsvFilePath, header.join("\t") + '\n', 'utf8', (err) => {
     if (err) throw new Error('Failed to write header', err)
   })
   console.log(chalk.green('>>> Header writed to file.\n'))
 }
 
-async function cropImage(imgPath) {
-  console.log(chalk.blue(`>>> ImagePath: ${imgPath}`))
+async function cropImage(img) {
+  console.log(chalk.blue(`>>> ImagePath: ${img}`))
   try {
     for (let i = 0; i < 3; i++) {
-      const image = await Jimp.read(imgPath)
+      const image = await Jimp.read(img)
       image.grayscale()
       image.crop(...cropCoords[Object.keys(cropCoords)[i]])
-      await image.writeAsync(`cropped_images/cropped_part${i + 1}.png`)
+      await image.writeAsync(`image_crops/part${i + 1}.png`)
     }
   } catch (error) {
     throw new Error('Failed to crop the image: ', error)
@@ -73,8 +75,8 @@ async function cropImage(imgPath) {
   console.log('>>> cropImage Done.')
 }
 
-async function ocrImage(part) {
-  console.log(`>>> OCR cropped_${part} Start`)
+async function ocrImage(img) {
+  console.log(`>>> OCR cropped ${img} Start`)
   try {
     const worker = createWorker({
       //logger: m => console.log(m),
@@ -82,25 +84,25 @@ async function ocrImage(part) {
     await worker.load()
     await worker.loadLanguage('por')
     await worker.initialize('por')
-    const { data: { text } } = await worker.recognize(`./cropped_images/cropped_${part}.png`)
+    const { data: { text } } = await worker.recognize(`./image_crops/${img}.png`)
     await worker.terminate()
     return text
 
   } catch (error) {
     throw new Error('Failed to recognize characters: ', error)
   } finally {
-    console.log(`>>> OCR cropped_${part} Done.`)
+    console.log(`>>> OCR cropped ${img} Done.`)
   }
 }
 
 function processData(text1, text2, text3) {
-  let data = (text1 + text2 + text3)
-  if (!data) throw new Error('ProcessData must receive a string')
-  data = data.replace(/\s/g, '')
-  data = data.replace("'", '')
-  data = data.replace('"', '')
+  let text = (text1 + text2 + text3)
+  if (!text) throw new Error('ProcessData must receive a string')
+  text = text.replace(/\s/g, '')
+  text = text.replace("'", '')
+  text = text.replace('"', '')
   console.log('>>> processData Done.')
-  return data
+  return text
 }
 
 function getValues(text) {
@@ -138,27 +140,25 @@ function addHandFillFields(to) {
 }
 
 async function appendValues(arrValues) {
-  fs.appendFile(txtFilePath, arrValues.join(" ") + '\n', 'utf8', (err) => {
+  await fs.promises.appendFile(tsvFilePath, arrValues.join("\t") + '\n', 'utf8', (err) => {
     if (err) throw new Error('Failed to append values: ', err)
   })
-
-  sleep(6000)
   console.log(chalk.green('>>> Values Appended to file.\n'))
 }
 
-function startingLog() {
-  console.log(chalk.bgGreen('>>>         Starting Program         <<<\n'))
+function starterLog() {
+  console.log(chalk.bgGreen('\n>>>       Starting Program       <<<\n'))
 }
 
-let counter = 1
-function counterImagesLog(files) {
-  console.log(chalk.green(`>>> ImagesCounter: ${counter}/${files.length}`))
-  counter++
+let processCounter = 1
+function processCounterLog(files) {
+  console.log(chalk.green(`>>> Processing: ${processCounter}/${files.length}`))
+  processCounter++
 }
 
 function finishLog() {
+  console.log(chalk.bgGreen('>>>       Program Finished       <<<\n'))
   sleep(8000)
-  console.log(chalk.bgGreen('>>>         Program Finished         <<<\n'))
 }
 
 function sleep(ms) {
@@ -178,8 +178,14 @@ async function main(imagePath) {
   await appendValues(values)
 }
 
-(async () => {
-  startingLog()
+async function writeExcel(tsvFile) {
+  const txt = xlsx.readFile(tsvFile, String);
+  await xlsx.writeFile(txt, xlsFilePath)
+  console.log(chalk.green('>>> writeExcel Done.\n'))
+}
+
+async function init() {
+  starterLog()
   addHandFillHeader(headerTM)
   writeHeader(headerTM)
 
@@ -188,8 +194,11 @@ async function main(imagePath) {
   })
 
   for (const file of files) {
-    counterImagesLog(files)
+    processCounterLog(files)
     await main(imagesDirPath + file)
   }
+  await writeExcel(tsvFilePath)
   finishLog()
-})()
+}
+
+init()
