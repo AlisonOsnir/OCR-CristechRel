@@ -1,5 +1,12 @@
-ECHO 'Iniciando OCR-CristechRel'
+@ECHO OFF
 
 cd ./
 
-start node main.js
+ECHO *****************************************
+ECHO *    Deseja iniciar OCR-CristechRel?    *
+ECHO *                                       *
+
+PAUSE
+
+START node main.js
+
