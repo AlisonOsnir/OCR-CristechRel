@@ -37,7 +37,7 @@ const regexTM = {
   'Serial'    : /númerodesérie:(\d{6})/i,
   'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
   'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
-  'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i, //Não está pegando N/A deviso a 2()
+  'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
   'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
   'Saida-1mA' : /[1i]ma:(\d{2})/i,
   'Saida-5mA' : /[s5]ma:?(\d{2})/i,
