@@ -1,5 +1,8 @@
 node_modules 
-cropped_images
+image_crops
+image_test
+outputs
 values.txt
+values.tsv
 por.traineddata
 eng.traineddata
