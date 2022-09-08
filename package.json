@@ -1,5 +1,5 @@
 {
-  "name": "tesseractocr",
+  "name": "ocr-cristechrel",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -12,8 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "chalk": "^5.0.1",
+    "fs": "^0.0.1-security",
     "fs.promises": "^0.1.2",
-    "jimp": "^0.16.1",
-    "tesseract.js": "^2.1.5"
+    "jimp": "^0.16.0",
+    "tesseract.js": "^2.1.5",
+    "xlsx": "^0.18.5"
   }
 }
