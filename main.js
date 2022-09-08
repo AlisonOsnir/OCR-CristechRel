@@ -33,16 +33,16 @@ const handFillFields = {
   'Burn-in(Out)':'06:00'
 }
 
-const regExpTM = {
-  'Serial'    : /númerodesérie:\d{6}/i,
-  'RTD-A'     : /RTDA:?\d{3}(?:,\d)?/i,
-  'RTD-B'     : /RTD[5B8]?:\d{3}(?:,\d)?/i,
-  'TC-CR'     : /correntedereferência:(?:\d,\d{2})|(?:n\/a)/i,
-  'TC-CL'     : /correntelida:(?:\d,\d{2})|(?:n\/a)/i,
-  'Saida-1mA' : /[1i]ma:\d{2}/i,
-  'Saida-5mA' : /[s5]ma:?\d{2}/i,
-  'Saida-10mA': /10ma:?\d{2}/i,
-  'Saida-20mA': /20ma:?\d{2}/i,
+const regexTM = {
+  'Serial'    : /númerodesérie:(\d{6})/i,
+  'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
+  'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
+  'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i, //Não está pegando N/A deviso a 2()
+  'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
+  'Saida-1mA' : /[1i]ma:(\d{2})/i,
+  'Saida-5mA' : /[s5]ma:?(\d{2})/i,
+  'Saida-10mA': /10ma:?(\d{2})/i,
+  'Saida-20mA': /20ma:?(\d{2})/i,
 }
 
 function addHandFillHeader(to) {
@@ -106,36 +106,29 @@ function processData(text1, text2, text3) {
 function getValues(text) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
-  let regExpValues = Object.values(regExpTM)
-  const arr = []
-  let acc = 0
+  let regex = Object.values(regexTM)
+  let errCounter = 0
+  const result = []
 
-  for (let i = 0; i < regExpValues.length; i++) {
-    let result = regExpValues[i].exec(text)
-    if (result) {
-      result = result.toString()
-      if (i == 0) arr.push(result.slice(-6))
-      if (i == 1) result.length < 9 ? arr.push(result.slice(-3)) : arr.push(result.slice(-5))
-      if (i == 2) result.length < 9 ? arr.push(result.slice(-3)) : arr.push(result.slice(-5))
-      if (i == 3) arr.push(result.slice(-4))
-      if (i == 4) arr.push(result.slice(-4))
-      if (i == 5) arr.push(result.slice(-2))
-      if (i == 6) arr.push(result.slice(-2))
-      if (i == 7) arr.push(result.slice(-2))
-      if (i == 8) arr.push(result.slice(-2))
+  for (let i = 0; i < regex.length; i++) {
+    let match = regex[i].exec(text)
+
+    if (match !== null) {
+      const matchValue = match[1].toString()
+      result.push(matchValue)
 
       if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
       if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
 
-      text = text.replace(result, (chalk.bgGreen('###')))
-    } else if (result == undefined) {
-      acc++
-      arr.push('#ERROR#')
+      text = text.replace(match[0], (chalk.bgGreen('___')))
+    } else {
+      errCounter++
+      result.push('#ERROR#')
     }
   }
+  if (errCounter) { console.error(chalk.red(`Err ${errCounter} regex not found.`)) }
   console.log('>>> getValues Done.')
-  if (acc) { console.error(chalk.red(`### ${acc} regExp not found.`)) }
-  return arr
+  return result
 }
 
 function addHandFillFields(to) {
