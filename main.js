@@ -4,7 +4,7 @@ import Jimp from 'jimp'
 import * as fs from 'fs'
 import xlsx from 'xlsx';
 
-const imagesDirPath = './images_test/'
+const imagesDirPath = './image_test/'
 const tsvFilePath = './outputs/values.tsv'
 const xlsFilePath = './outputs/output.xls'
 
