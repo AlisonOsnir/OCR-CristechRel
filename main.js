@@ -2,7 +2,7 @@ import { createWorker } from 'tesseract.js'
 import chalk from 'chalk'
 import Jimp from 'jimp'
 import * as fs from 'fs'
-import xlsx from 'xlsx';
+import xlsx from 'xlsx'
 
 const imagesDirPath = './image_test/'
 const tsvFilePath = './outputs/values.tsv'
@@ -42,7 +42,7 @@ const regexTM = {
   'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
   'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
   'Saida-1mA' : /[1i]ma:(\d{2})/i,
-  'Saida-5mA' : /[s5]ma:?(\d{2})/i,
+  'Saida-5mA' : /[5s]ma:?(\d{2})/i,
   'Saida-10mA': /10ma:?(\d{2})/i,
   'Saida-20mA': /20ma:?(\d{2})/i,
 }
@@ -179,7 +179,7 @@ async function main(imagePath) {
 }
 
 async function writeExcel(tsvFile) {
-  const txt = xlsx.readFile(tsvFile, String);
+  const txt = xlsx.readFile(tsvFile, String)
   await xlsx.writeFile(txt, xlsFilePath)
   console.log(chalk.green('>>> writeExcel Done.\n'))
 }

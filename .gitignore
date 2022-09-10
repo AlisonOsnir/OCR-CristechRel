@@ -3,5 +3,7 @@ image_crops/part*
 # image_test
 outputs/values.txt
 outputs/values.tsv
+outputs/*xls
+outputs/*xlsx
 por.traineddata
 eng.traineddata
