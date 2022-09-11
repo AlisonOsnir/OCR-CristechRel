@@ -146,8 +146,17 @@ async function appendValues(arrValues) {
   console.log(chalk.green('>>> Values Appended to file.\n'))
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 function starterLog() {
   console.log(chalk.bgGreen('\n>>>       Starting Program       <<<\n'))
+}
+function finishLog() {
+  console.log(chalk.bgGreen('>>>       Program Finished       <<<'))
 }
 
 let processCounter = 1
@@ -156,16 +165,7 @@ function processCounterLog(files) {
   processCounter++
 }
 
-function finishLog() {
-  console.log(chalk.bgGreen('>>>       Program Finished       <<<\n'))
-  sleep(8000)
-}
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
 
 async function main(imagePath) {
   await cropImage(imagePath)
@@ -199,6 +199,7 @@ async function init() {
   }
   await writeExcel(tsvFilePath)
   finishLog()
+  sleep(8000)
 }
 
 init()
