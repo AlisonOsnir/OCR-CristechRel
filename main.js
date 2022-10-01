@@ -14,7 +14,7 @@ const cropCoords = {
   'part3': [510, 100, 237, 460]
 }
 
-const headerTM = [
+const header = [
   'Serial', 'RTD-A', 'RTD-B', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL',
   'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
   'Saida_mA2-1mA', 'Saida_mA2-5mA', 'Saida_mA2-10mA', 'Saida_mA2-20mA'
@@ -31,11 +31,11 @@ const handFillFields = {
   'I(MA)'       : 'OK',
   'I(A)'        : 'OK',
   'RS232/485'   : 'OK',
-  'Burn-in(IN)' :'18:00',
-  'Burn-in(Out)':'06:00'
+  'Burn-in(IN)' : '18:00',
+  'Burn-in(Out)': '06:00'
 }
 
-const regexTM = {
+const regex = {
   'Serial'    : /númerodesérie:(\d{6})/i,
   'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
   'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
@@ -108,12 +108,12 @@ function processData(text1, text2, text3) {
 function getValues(text) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
-  let regex = Object.values(regexTM)
+  let re = Object.values(regex)
   let errCounter = 0
   const result = []
 
-  for (let i = 0; i < regex.length; i++) {
-    let match = regex[i].exec(text)
+  for (let i = 0; i < re.length; i++) {
+    let match = re[i].exec(text)
 
     if (match !== null) {
       const matchValue = match[1].toString()
@@ -128,9 +128,21 @@ function getValues(text) {
       result.push('#ERROR#')
     }
   }
-  if (errCounter) { console.error(chalk.red(`Err ${errCounter} regex not found.`)) }
+  if (errCounter) { console.error(chalk.red(`>>> Error: ${errCounter} values not found.`)) }
   console.log('>>> getValues Done.')
   return result
+}
+
+function setImageDate(imagePath) {
+  fs.stat(imagePath, (err, stats) => {
+    if (err) {
+      return console.Error('err lastModifiedDate not found'+ err)
+    }
+    let date = stats.mtime
+    date = date.toLocaleDateString()
+    handFillFields.Data = date
+    console.log(`>>> ImageDate: ${date}`)
+  })
 }
 
 function addHandFillFields(to) {
@@ -165,8 +177,6 @@ function processCounterLog(files) {
   processCounter++
 }
 
-
-
 async function main(imagePath) {
   await cropImage(imagePath)
   let crop1 = await ocrImage('part1')
@@ -186,8 +196,8 @@ async function writeExcel(tsvFile) {
 
 async function init() {
   starterLog()
-  addHandFillHeader(headerTM)
-  writeHeader(headerTM)
+  addHandFillHeader(header)
+  writeHeader(header)
 
   const files = await fs.promises.readdir(imagesDirPath, (err) => {
     if (err) return console.log('Unable to scan directory: ' + err)
@@ -195,6 +205,7 @@ async function init() {
 
   for (const file of files) {
     processCounterLog(files)
+    setImageDate(imagesDirPath + file)
     await main(imagesDirPath + file)
   }
   await writeExcel(tsvFilePath)
