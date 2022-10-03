@@ -4,9 +4,9 @@ import Jimp from 'jimp'
 import * as fs from 'fs'
 import xlsx from 'xlsx'
 
-const imagesDirPath = './image_test/'
-const tsvFilePath = './outputs/values.tsv'
-const xlsFilePath = './outputs/output.xls'
+const imagesDirPath = '../screenshots/'
+const tsvFilePath = '../outputs/values.tsv'
+const xlsFilePath = '../outputs/output.xls'
 
 const cropCoords = {
   'part1': [1, 20, 200, 30],
@@ -41,7 +41,7 @@ const regex = {
   'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
   'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
   'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
-  'Saida-1mA' : /[1i]ma:(\d{2})/i,
+  'Saida-1mA' : /[1i]ma:?(\d{2})/i,
   'Saida-5mA' : /[5s]ma:?(\d{2})/i,
   'Saida-10mA': /10ma:?(\d{2})/i,
   'Saida-20mA': /20ma:?(\d{2})/i,
@@ -65,7 +65,7 @@ async function cropImage(img) {
   try {
     for (let i = 0; i < 3; i++) {
       const image = await Jimp.read(img)
-      image.grayscale()
+      //image.grayscale()
       image.crop(...cropCoords[Object.keys(cropCoords)[i]])
       await image.writeAsync(`image_crops/part${i + 1}.png`)
     }
@@ -92,6 +92,7 @@ async function ocrImage(img) {
     throw new Error('Failed to recognize characters: ', error)
   } finally {
     console.log(`>>> OCR cropped ${img} Done.`)
+    
   }
 }
 
@@ -210,7 +211,7 @@ async function init() {
   }
   await writeExcel(tsvFilePath)
   finishLog()
-  sleep(8000)
+  sleep(6000)
 }
 
 init()
