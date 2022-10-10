@@ -1,6 +1,6 @@
 node_modules 
 image_crops/part*
-# image_test
+screenshots/*
 outputs/values.txt
 outputs/values.tsv
 outputs/*xls

@@ -2,8 +2,9 @@
 
 cd ./
 
-ECHO *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
-ECHO *     Deseja iniciar OCR-CristechRel?     *
+ECHO .                                             .
+ECHO .       Deseja iniciar OCR-CristechRel?       .
+ECHO .                                             .
 
 PAUSE
 
