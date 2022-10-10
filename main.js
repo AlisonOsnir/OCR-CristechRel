@@ -4,17 +4,17 @@ import Jimp from 'jimp'
 import * as fs from 'fs'
 import xlsx from 'xlsx'
 
-const imagesDirPath = './image_test/'
+const imagesDirPath = './screenshots/'
 const tsvFilePath = './outputs/values.tsv'
 const xlsFilePath = './outputs/output.xls'
 
 const cropCoords = {
   'part1': [1, 20, 200, 30],
-  'part2': [278, 100, 237, 460],
-  'part3': [510, 100, 237, 460]
+  'part2': [282, 140, 228, 370],
+  'part3': [512, 100, 220, 313]
 }
 
-const headerTM = [
+const header = [
   'Serial', 'RTD-A', 'RTD-B', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL',
   'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
   'Saida_mA2-1mA', 'Saida_mA2-5mA', 'Saida_mA2-10mA', 'Saida_mA2-20mA'
@@ -31,17 +31,17 @@ const handFillFields = {
   'I(MA)'       : 'OK',
   'I(A)'        : 'OK',
   'RS232/485'   : 'OK',
-  'Burn-in(IN)' :'18:00',
-  'Burn-in(Out)':'06:00'
+  'Burn-in(IN)' : '18:00',
+  'Burn-in(Out)': '06:00'
 }
 
-const regexTM = {
+const regex = {
   'Serial'    : /númerodesérie:(\d{6})/i,
   'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
   'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
   'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
   'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
-  'Saida-1mA' : /[1i]ma:(\d{2})/i,
+  'Saida-1mA' : /[1i]ma:?(\d{2})/i,
   'Saida-5mA' : /[5s]ma:?(\d{2})/i,
   'Saida-10mA': /10ma:?(\d{2})/i,
   'Saida-20mA': /20ma:?(\d{2})/i,
@@ -65,7 +65,7 @@ async function cropImage(img) {
   try {
     for (let i = 0; i < 3; i++) {
       const image = await Jimp.read(img)
-      image.grayscale()
+      //image.grayscale()
       image.crop(...cropCoords[Object.keys(cropCoords)[i]])
       await image.writeAsync(`image_crops/part${i + 1}.png`)
     }
@@ -76,7 +76,6 @@ async function cropImage(img) {
 }
 
 async function ocrImage(img) {
-  console.log(`>>> OCR cropped ${img} Start`)
   try {
     const worker = createWorker({
       //logger: m => console.log(m),
@@ -92,6 +91,7 @@ async function ocrImage(img) {
     throw new Error('Failed to recognize characters: ', error)
   } finally {
     console.log(`>>> OCR cropped ${img} Done.`)
+    
   }
 }
 
@@ -108,12 +108,12 @@ function processData(text1, text2, text3) {
 function getValues(text) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
-  let regex = Object.values(regexTM)
+  let re = Object.values(regex)
   let errCounter = 0
   const result = []
 
-  for (let i = 0; i < regex.length; i++) {
-    let match = regex[i].exec(text)
+  for (let i = 0; i < re.length; i++) {
+    let match = re[i].exec(text)
 
     if (match !== null) {
       const matchValue = match[1].toString()
@@ -128,9 +128,21 @@ function getValues(text) {
       result.push('#ERROR#')
     }
   }
-  if (errCounter) { console.error(chalk.red(`Err ${errCounter} regex not found.`)) }
+  if (errCounter) { console.error(chalk.red(`>>> Error: ${errCounter} values not found.`)) }
   console.log('>>> getValues Done.')
   return result
+}
+
+function getImageDate(imagePath) {
+  fs.stat(imagePath, (err, stats) => {
+    if (err) {
+      return console.Error('err lastModifiedDate not found'+ err)
+    }
+    let date = stats.mtime
+    date = date.toLocaleDateString()
+    handFillFields.Data = date
+    console.log(`>>> ImageDate: ${date}`)
+  })
 }
 
 function addHandFillFields(to) {
@@ -146,25 +158,23 @@ async function appendValues(arrValues) {
   console.log(chalk.green('>>> Values Appended to file.\n'))
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 function starterLog() {
   console.log(chalk.bgGreen('\n>>>       Starting Program       <<<\n'))
+}
+function finishLog() {
+  console.log(chalk.bgGreen('>>>       Program Finished       <<<'))
 }
 
 let processCounter = 1
 function processCounterLog(files) {
   console.log(chalk.green(`>>> Processing: ${processCounter}/${files.length}`))
   processCounter++
-}
-
-function finishLog() {
-  console.log(chalk.bgGreen('>>>       Program Finished       <<<\n'))
-  sleep(8000)
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
 }
 
 async function main(imagePath) {
@@ -186,8 +196,8 @@ async function writeExcel(tsvFile) {
 
 async function init() {
   starterLog()
-  addHandFillHeader(headerTM)
-  writeHeader(headerTM)
+  addHandFillHeader(header)
+  writeHeader(header)
 
   const files = await fs.promises.readdir(imagesDirPath, (err) => {
     if (err) return console.log('Unable to scan directory: ' + err)
@@ -195,10 +205,12 @@ async function init() {
 
   for (const file of files) {
     processCounterLog(files)
+    getImageDate(imagesDirPath + file)
     await main(imagesDirPath + file)
   }
   await writeExcel(tsvFilePath)
   finishLog()
+  sleep(6000)
 }
 
 init()
