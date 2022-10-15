@@ -239,7 +239,7 @@ async function init() {
   }
   await writeExcel(tsvFilePath)
   log.finish()
-  sleep(6000)
+  sleep(5000)
 }
 
 init()

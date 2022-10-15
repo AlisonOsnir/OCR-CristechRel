@@ -2,11 +2,13 @@
 
 cd ./
 
-ECHO .                                             .
-ECHO .       Deseja iniciar OCR-CristechRel?       .
-ECHO .                                             .
-
+ECHO .                                          .
+ECHO .        Iniciar OCR-CristechRel?          .
+ECHO .                                          .
+@ECHO.
 PAUSE
+CLS
 
-START node main.js
-
+START /B /WAIT node main.js
+@ECHO.
+PAUSE
