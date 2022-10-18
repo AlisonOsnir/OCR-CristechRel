@@ -10,6 +10,8 @@ const imagesDirPath = './screenshots/'
 const tsvFilePath = './outputs/values.tsv'
 const xlsFilePath = './outputs/output.xls'
 
+const errors = {}
+
 const cropCoords = {
   'part1': [1, 20, 200, 30],
   'part2': [282, 140, 228, 370],
@@ -106,7 +108,7 @@ start() {
       if (this.cursor >= this.size) {
         clearTimeout(this.timer)
       }
-    }, 1500)
+    }, 500)
   }
 }
 
@@ -141,7 +143,7 @@ function processData(text1, text2, text3) {
   return text
 }
 
-function getValues(text) {
+function getValues(text, imagePath) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
   let re = Object.values(regex)
@@ -164,7 +166,11 @@ function getValues(text) {
       result.push('#ERROR#')
     }
   }
-  if (errCounter) { console.error(chalk.red(`>>> Error: ${errCounter} values not found.`)) }
+  if (errCounter) { 
+    console.error(chalk.red(`>>> Error: ${errCounter} values not found.`)) 
+    errors[imagePath] = errCounter
+
+  }
   log.getValues()
   return result
 }
@@ -212,7 +218,7 @@ async function main(imagePath) {
   let crop2 = await ocrImage('part2')
   let crop3 = await ocrImage('part3')
   let text = processData(crop1, crop2, crop3)
-  let values = getValues(text)
+  let values = getValues(text,imagePath)
   addHandFillFields(values)
   await appendValues(values)
 }
@@ -224,7 +230,6 @@ async function writeExcel(tsvFile) {
 }
 
 async function init() {
-
   log.start()
   addHandFillHeader(header)
   writeHeader(header)
@@ -238,9 +243,18 @@ async function init() {
     getImageDate(imagesDirPath + file)
     await main(imagesDirPath + file)
   }
+
   await writeExcel(tsvFilePath)
+  
+  if (Object.keys(errors).length > 0) {
+    for (const key in errors) {
+    console.log(chalk.bgRed(`>>> ${path.parse(key).name} : ${errors[key]} values not found. <<<`))
+    }
+    console.log('\n')
+  }
+
   log.finish()
-  sleep(5000)
+  sleep(3000)
 }
 
 init()
