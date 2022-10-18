@@ -4,6 +4,7 @@ import Jimp from 'jimp'
 import * as fs from 'fs'
 import xlsx from 'xlsx'
 import process from "process"
+import path from 'path'
 
 const imagesDirPath = './screenshots/'
 const tsvFilePath = './outputs/values.tsv'
@@ -49,11 +50,11 @@ const regex = {
 }
 
 const log = {
-  'start'            : () => console.log(chalk.bgGreen('\n>>>       Starting Program       <<<\n')),
+  'start'            : () => console.log(chalk.bgGreen('>>>       Starting Program       <<<\n')),
   'finish'           : () => console.log(chalk.bgGreen('>>>       Program Finished       <<<')),
   'AddHandFillHeader': () => console.log('>>> AddHandFillHeader Done.'),
   'writeHeader'      : () => console.log(chalk.green('>>> Header writed to file.\n')),
-  'imagePath'        : (img)  => console.log(chalk.blue(`>>> ImagePath: ${img}`)),
+  'imageName'        : (img)  => console.log(chalk.blue(`>>> ImageName: ${path.parse(img).name}`)),
   'getImageDate'     : (date) => console.log(chalk.blue(`>>> ImageDate: ${date}`)),
   'cropImage'        : () => console.log('>>> cropImage Done.'),
   'ocrImage'         : (img)  => console.log(` OCR cropped ${img} Done.`),
@@ -78,7 +79,7 @@ function writeHeader(header) {
 }
 
 async function cropImage(img) {
-  log.imagePath(img)
+  log.imageName(img)
   try {
     for (let i = 0; i < 3; i++) {
       const image = await Jimp.read(img)
