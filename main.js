@@ -176,9 +176,9 @@ function getValues(text, imagePath) {
 function getImageDate(imagePath) {
   fs.stat(imagePath, (err, stats) => {
     if (err) {
-      return console.Error('err birthtime not found'+ err)
+      return console.Error('err lastModified not found'+ err)
     }
-    let date = stats.birthtime
+    let date = stats.mtime
     date = date.toLocaleDateString()
     handFillFields.Data = date
     log.getImageDate(date)
