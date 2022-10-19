@@ -12,3 +12,5 @@ CLS
 START /B /WAIT node main.js
 @ECHO.
 PAUSE
+
+START ./outputs/output.xls

@@ -156,15 +156,13 @@ function getValues(text, imagePath) {
     if (match !== null) {
       const matchValue = match[1].toString()
       result.push(matchValue)
-
-      if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
-      if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
-
       text = text.replace(match[0], (chalk.bgGreen('___')))
     } else {
       errCounter++
-      result.push('#ERROR#')
+      result.push("#ERROR#")
     }
+    if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
+    if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
   }
   if (errCounter) { 
     console.error(chalk.red(`>>> Error: ${errCounter} values not found.`)) 
