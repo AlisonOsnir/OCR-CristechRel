@@ -15,7 +15,7 @@ const errors = {}
 
 const cropCoords = {
   'part1': [1, 20, 200, 30],
-  'part2': [282, 140, 228, 370],
+  'part2': [282, 140, 228, 310],
   'part3': [512, 100, 220, 313]
 }
 
@@ -74,10 +74,10 @@ async function cropImage(img) {
       image.crop(...cropCoords[Object.keys(cropCoords)[i]])
       await image.writeAsync(`image_crops/part${i + 1}.png`)
     }
+    log.cropImage()
   } catch (error) {
     throw new Error('Failed to crop image', error)
   }
-  log.cropImage()
 }
 
 class LoadingIndicator {
@@ -86,8 +86,8 @@ class LoadingIndicator {
     this.cursor = 0
     this.timer = null
   }
-start() {
-   this.timer = setInterval(() => {
+  start() {
+    this.timer = setInterval(() => {
       process.stdout.write(">")
       this.cursor++;
       if (this.cursor >= this.size) {
@@ -109,12 +109,10 @@ async function ocrImage(img) {
     await worker.initialize('por')
     const { data: { text } } = await worker.recognize(`./image_crops/${img}.png`)
     await worker.terminate()
+    log.ocrImage(img)
     return text
-
   } catch (error) {
     throw new Error('Failed to recognize characters', error)
-  } finally {
-    log.ocrImage(img)
   }
 }
 
@@ -137,7 +135,6 @@ function getValues(text, imagePath) {
 
   for (let i = 0; i < re.length; i++) {
     let match = re[i].exec(text)
-
     if (match !== null) {
       const matchValue = match[1].toString()
       result.push(matchValue)
@@ -159,9 +156,7 @@ function getValues(text, imagePath) {
 
 function getImageDate(imagePath) {
   fs.stat(imagePath, (err, stats) => {
-    if (err) {
-      throw new Error('Last modified date not found', err)
-    }
+    if (err) { throw new Error('Last modified date not found', err) }
     let date = stats.mtime
     date = date.toLocaleDateString()
     handFillFields.Data = date
@@ -177,15 +172,12 @@ function addHandFillFields(to) {
 
 async function appendValues(arrValues) {
   await fs.promises.appendFile(tsvFilePath, arrValues.join("\t") + '\n', 'utf8', (err) => {
-    if (err) throw new Error('Failed to append values', err)
-  })
+    if (err) throw new Error('Failed to append values', err) })
   log.appendValues()
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
+  return new Promise( (resolve) => { setTimeout(resolve, ms)} )
 }
 
 let processCounter = 1
@@ -211,35 +203,34 @@ async function writeExcel(tsvFile) {
   log.writeExcel()
 }
 
-async function init() {
-  log.start()
-  addHandFillHeader(header)
-  writeHeader(header)
-  
-  const files = await fs.promises.readdir(imagesDirPath, (err) => {
-    if (err) return console.log('Unable to scan directory: ' + err)
-  })
-
-  if (files.length > 0) {
-    for (const file of files) {
-      processCounterLog(files)
-      getImageDate(imagesDirPath + file)
-      await main(imagesDirPath + file)
-    }
-  } else {
-    log.emptyFolderError()
-  }
-
-  await writeExcel(tsvFilePath)
-  
+function reportValuesError() {
   if (Object.keys(errors).length > 0) {
     for (const key in errors) {
     log.reportValuesError(key, errors)
     }
     console.log('\n')
   }
+}
 
-  log.finish()
+async function init() {
+  log.startProgram()
+  addHandFillHeader(header)
+  writeHeader(header)
+  
+  const files = await fs.promises.readdir(imagesDirPath, (err) => {
+    if (err) throw new Error('Unable to scan directory: ' + err) 
+  })
+
+  if (files.length === 0) log.emptyFolderError()
+  for (const file of files) {
+    processCounterLog(files)
+    getImageDate(imagesDirPath + file)
+    await main(imagesDirPath + file)
+  }
+
+  await writeExcel(tsvFilePath)
+  reportValuesError()
+  log.finishProgram()
   sleep(3000)
 }
 

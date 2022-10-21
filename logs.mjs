@@ -2,8 +2,8 @@ import chalk from 'chalk'
 import path from 'path'
 
 const log = {
-  'start'            : () => console.log(chalk.bgGreen('>>>       Starting Program       <<<\n')),
-  'finish'           : () => console.log(chalk.bgGreen('>>>       Program Finished       <<<')),
+  'startProgram'     : () => console.log(chalk.bgGreen('>>>       Starting Program       <<<\n')),
+  'finishProgram'    : () => console.log(chalk.bgGreen('>>>       Program Finished       <<<')),
   'addHandFillHeader': () => console.log('>>> addHandFillHeader Done.'),
   'writeHeader'      : () => console.log(chalk.green('>>> Header writed to file.\n')),
   'imageName'     : (img) => console.log(chalk.blue(`>>> ImageName: ${path.parse(img).name}`)),
@@ -18,7 +18,7 @@ const log = {
 
   'getValuesError'   : (acc) => console.error(chalk.red(`>>> Error: ${acc} values not found.`)),
   'emptyFolderError'    : () => console.error(chalk.red('>>> Screenshot folder is empty!')),
-  'reportValuesError': (key, errors) => console.log(chalk.bgRed(`>>> ${path.parse(key).name} - ${errors[key]} values not found  <<<`))
+  'reportValuesError': (key, errors) => console.error(chalk.bgRed(`>>> ${path.parse(key).name} - ${errors[key]} values not found  <<<`))
 }
 
 export default log
