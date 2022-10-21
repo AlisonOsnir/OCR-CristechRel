@@ -4,7 +4,7 @@ import Jimp from 'jimp'
 import * as fs from 'fs'
 import xlsx from 'xlsx'
 import process from "process"
-import path from 'path'
+
 import log from './logs.mjs'
 
 const imagesDirPath = './screenshots/'
