@@ -2,10 +2,11 @@
 
 cd ./
 
-ECHO .                                          .
-ECHO .        Iniciar OCR-CristechRel?          .
-ECHO .                                          .
 @ECHO.
+ECHO *        Iniciar OCR-CristechRel?          *
+@ECHO.
+@ECHO.
+
 PAUSE
 CLS
 
