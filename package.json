@@ -5,8 +5,7 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "start": "node main.js",
-    "test": "jest"
+    "start": "node main.js"
   },
   "keywords": [],
   "author": "",
@@ -18,8 +17,5 @@
     "jimp": "^0.16.0",
     "tesseract.js": "^2.1.5",
     "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "jest": "^29.2.1"
   }
 }
