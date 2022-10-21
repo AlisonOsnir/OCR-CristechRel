@@ -234,7 +234,7 @@ async function init() {
   
   if (Object.keys(errors).length > 0) {
     for (const key in errors) {
-    log.reportValuesError(key, {errors})
+    log.reportValuesError(key, errors)
     }
     console.log('\n')
   }
