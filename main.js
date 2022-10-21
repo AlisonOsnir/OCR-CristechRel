@@ -5,6 +5,7 @@ import * as fs from 'fs'
 import xlsx from 'xlsx'
 import process from "process"
 import path from 'path'
+import log from './logs.mjs'
 
 const imagesDirPath = './screenshots/'
 const tsvFilePath = './outputs/values.tsv'
@@ -51,26 +52,10 @@ const regex = {
   'Saida-20mA': /20ma:?(\d{2})/i,
 }
 
-const log = {
-  'start'            : () => console.log(chalk.bgGreen('>>>       Starting Program       <<<\n')),
-  'finish'           : () => console.log(chalk.bgGreen('>>>       Program Finished       <<<')),
-  'AddHandFillHeader': () => console.log('>>> AddHandFillHeader Done.'),
-  'writeHeader'      : () => console.log(chalk.green('>>> Header writed to file.\n')),
-  'imageName'        : (img)  => console.log(chalk.blue(`>>> ImageName: ${path.parse(img).name}`)),
-  'getImageDate'     : (date) => console.log(chalk.blue(`>>> ImageDate: ${date}`)),
-  'cropImage'        : () => console.log('>>> cropImage Done.'),
-  'ocrImage'         : (img)  => console.log(` OCR cropped ${img} Done.`),
-  'processData'      : () => console.log('>>> processData Done.'),
-  'getValues'        : () => console.log('>>> getValues Done.'),
-  'AddHandFillFields': () => console.log('>>> AddHandFillFields Done.'),
-  'appendValues'     : () => console.log(chalk.green('>>> Values Appended to file.\n')),
-  'writeExcel'       : () => console.log(chalk.green('>>> writeExcel Done.\n'))
-  }
-
 function addHandFillHeader(to) {
   let arr = Object.keys(handFillFields)
   to.splice(1, 0, ...arr)
-  log.AddHandFillHeader()
+  log.addHandFillHeader()
 }
 
 function writeHeader(header) {
@@ -90,7 +75,7 @@ async function cropImage(img) {
       await image.writeAsync(`image_crops/part${i + 1}.png`)
     }
   } catch (error) {
-    throw new Error('Failed to crop the image: ', error)
+    throw new Error('Failed to crop image', error)
   }
   log.cropImage()
 }
@@ -127,7 +112,7 @@ async function ocrImage(img) {
     return text
 
   } catch (error) {
-    throw new Error('Failed to recognize characters: ', error)
+    throw new Error('Failed to recognize characters', error)
   } finally {
     log.ocrImage(img)
   }
@@ -159,15 +144,14 @@ function getValues(text, imagePath) {
       text = text.replace(match[0], (chalk.bgGreen('___')))
     } else {
       errCounter++
-      result.push("#ERROR#")
+      result.push("#ERROR")
     }
     if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
     if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
   }
   if (errCounter) { 
-    console.error(chalk.red(`>>> Error: ${errCounter} values not found.`)) 
+    log.getValuesError(errCounter)
     errors[imagePath] = errCounter
-
   }
   log.getValues()
   return result
@@ -176,7 +160,7 @@ function getValues(text, imagePath) {
 function getImageDate(imagePath) {
   fs.stat(imagePath, (err, stats) => {
     if (err) {
-      return console.Error('err lastModified not found'+ err)
+      throw new Error('Last modified date not found', err)
     }
     let date = stats.mtime
     date = date.toLocaleDateString()
@@ -188,12 +172,12 @@ function getImageDate(imagePath) {
 function addHandFillFields(to) {
   let arr = Object.values(handFillFields)
   to.splice(1, 0, ...arr)
-  log.AddHandFillFields()
+  log.addHandFillFields()
 }
 
 async function appendValues(arrValues) {
   await fs.promises.appendFile(tsvFilePath, arrValues.join("\t") + '\n', 'utf8', (err) => {
-    if (err) throw new Error('Failed to append values: ', err)
+    if (err) throw new Error('Failed to append values', err)
   })
   log.appendValues()
 }
@@ -235,18 +219,22 @@ async function init() {
   const files = await fs.promises.readdir(imagesDirPath, (err) => {
     if (err) return console.log('Unable to scan directory: ' + err)
   })
-  
-  for (const file of files) {
-    processCounterLog(files)
-    getImageDate(imagesDirPath + file)
-    await main(imagesDirPath + file)
+
+  if (files.length > 0) {
+    for (const file of files) {
+      processCounterLog(files)
+      getImageDate(imagesDirPath + file)
+      await main(imagesDirPath + file)
+    }
+  } else {
+    log.emptyFolderError()
   }
 
   await writeExcel(tsvFilePath)
   
   if (Object.keys(errors).length > 0) {
     for (const key in errors) {
-    console.log(chalk.bgRed(`>>> ${path.parse(key).name} : ${errors[key]} values not found. <<<`))
+    log.reportValuesError(key, {errors})
     }
     console.log('\n')
   }
