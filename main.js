@@ -7,7 +7,7 @@ import process from "process"
 
 import log from './logs.mjs'
 
-const imagesDirPath = './screenshots/'
+const imagesDirPath = './screenshots-teste/'
 const tsvFilePath = './outputs/values.tsv'
 const xlsFilePath = './outputs/output.xls'
 
@@ -20,7 +20,7 @@ const cropCoords = {
 }
 
 const header = [
-  'Serial', 'RTD-A', 'RTD-B', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL',
+  'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
   'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
   'Saida_mA2-1mA', 'Saida_mA2-5mA', 'Saida_mA2-10mA', 'Saida_mA2-20mA'
 ]
@@ -42,10 +42,10 @@ const handFillFields = {
 
 const regex = {
   'Serial'    : /númerodesérie:(\d{6})/i,
-  'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
-  'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
   'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
   'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
+  'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
+  'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
   'Saida-1mA' : /[1i]ma:?(\d{2})/i,
   'Saida-5mA' : /[5s]ma:?(\d{2})/i,
   'Saida-10mA': /10ma:?(\d{2})/i,
@@ -143,7 +143,7 @@ function getValues(text, imagePath) {
       errCounter++
       result.push("#ERROR")
     }
-    if (i == 4 && repeatCalibraçãoTC) { i = 2; repeatCalibraçãoTC = false; }
+    if (i == 2 && repeatCalibraçãoTC) { i = 0; repeatCalibraçãoTC = false; }
     if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
   }
   if (errCounter) { 
