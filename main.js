@@ -1,6 +1,5 @@
 import { createWorker, createScheduler } from 'tesseract.js'
 import chalk from 'chalk'
-import Jimp from 'jimp'
 import * as fs from 'fs'
 import xlsx from 'xlsx'
 import process from "process"
@@ -13,12 +12,6 @@ const xlsFilePath = './outputs/output.xls'
 
 const errors = {}
 
-const cropCoords = {
-  'part1': [1, 20, 200, 30],
-  'part2': [282, 140, 228, 310],
-  'part3': [512, 100, 220, 313]
-}
-
 const header = [
   'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
   'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
@@ -26,28 +19,28 @@ const header = [
 ]
 
 const handFillFields = {
-  'Produto'     : '""',
-  'VersaoFW'    : '""',
-  'TCExterno'   : '""',
-  'Data'        : '""',
-  'Responsavel' : '""',
-  'Verify-1to9' : 'OK',
-  'Reles'       : 'OK',
-  'I(MA)'       : 'OK',
-  'I(A)'        : 'OK',
-  'RS232/485'   : 'OK',
-  'Burn-in(IN)' : '18:00',
+  'Produto': '""',
+  'VersaoFW': '""',
+  'TCExterno': '""',
+  'Data': '""',
+  'Responsavel': '""',
+  'Verify-1to9': 'OK',
+  'Reles': 'OK',
+  'I(MA)': 'OK',
+  'I(A)': 'OK',
+  'RS232/485': 'OK',
+  'Burn-in(IN)': '18:00',
   'Burn-in(Out)': '06:00'
 }
 
 const regex = {
-  'Serial'    : /númerodesérie:(\d{6})/i,
-  'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
-  'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
-  'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
-  'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
-  'Saida-1mA' : /[1i]ma:?(\d{2})/i,
-  'Saida-5mA' : /[5s]ma:?(\d{2})/i,
+  'Serial': /númerodesérie:(\d{6})/i,
+  'TC-CR': /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
+  'TC-CL': /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
+  'RTD-A': /RTDA:?(\d{3}(?:,\d)?)/i,
+  'RTD-B': /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
+  'Saida-1mA': /[1i]ma:?(\d{2})/i,
+  'Saida-5mA': /[5s]ma:?(\d{2})/i,
   'Saida-10mA': /10ma:?(\d{2})/i,
   'Saida-20mA': /20ma:?(\d{2})/i,
 }
@@ -65,21 +58,6 @@ function writeHeader(header) {
   log.writeHeader()
 }
 
-async function cropImage(img) {
-  log.imageName(img)
-  try {
-    for (let i = 0; i < 3; i++) {
-      const image = await Jimp.read(img)
-      //image.grayscale()
-      image.crop(...cropCoords[Object.keys(cropCoords)[i]])
-      await image.writeAsync(`image_crops/part${i + 1}.png`)
-    }
-    log.cropImage()
-  } catch (error) {
-    throw new Error('Failed to crop image', error)
-  }
-}
-
 class LoadingIndicator {
   constructor(size) {
     this.size = size
@@ -93,87 +71,75 @@ class LoadingIndicator {
       if (this.cursor >= this.size) {
         clearTimeout(this.timer)
       }
-    }, 500)
+    }, 1500)
   }
 }
 
 async function ocrImage(imagePath) {
-  const scheduler = createScheduler();
-const worker1 = createWorker();
-const worker2 = createWorker();
-const worker3 = createWorker();
-const rectangles = [
-  {
-    left: 1,
-    top: 20,
-    width: 200,
-    height: 30,
-  },
-  {
-    left: 282,
-    top: 140,
-    width: 228,
-    height: 310,
-  },
-  {
-    left: 512,
-    top: 100,
-    width: 220,
-    height: 313,
-  },
-];
+  try {
+    const ld = new LoadingIndicator(3)
+    ld.start()
 
+    const scheduler = createScheduler();
+    const worker1 = createWorker();
+    const worker2 = createWorker();
+    const worker3 = createWorker();
+    const rectangles = [
+      {
+        left: 1,
+        top: 20,
+        width: 200,
+        height: 30,
+      },
+      {
+        left: 282,
+        top: 140,
+        width: 228,
+        height: 310,
+      },
+      {
+        left: 512,
+        top: 100,
+        width: 220,
+        height: 313,
+      },
+    ];
 
-  await worker1.load();
-  await worker2.load();
-  await worker3.load();
-  await worker1.loadLanguage('por');
-  await worker2.loadLanguage('por');
-  await worker3.loadLanguage('por');
-  await worker1.initialize('por');
-  await worker2.initialize('por');
-  await worker3.initialize('por');
-  scheduler.addWorker(worker1);
-  scheduler.addWorker(worker2);
-  scheduler.addWorker(worker3);
-  const results = await Promise.all(rectangles.map((rectangle) => (
-    scheduler.addJob('recognize', imagePath , { rectangle })
-  )));
-  let text = (results.map(r => r.data.text));
-  console.log(text)
-  await scheduler.terminate();
-  return text
-  // try {
-  //   const ld = new LoadingIndicator(3)
-  //   ld.start()
-  //   const worker = createWorker({
-  //     //logger: m => console.log(m),
-  //   })
-  //   await worker.load()
-  //   await worker.loadLanguage('por')
-  //   await worker.initialize('por')
-  //   const { data: { text } } = await worker.recognize(`./image_crops/${img}.png`)
-  //   await worker.terminate()
-  //   log.ocrImage(img)
-  //   return text
-  // } catch (error) {
-  //   throw new Error('Failed to recognize characters', error)
-  
+    await worker1.load();
+    await worker2.load();
+    await worker3.load();
+    await worker1.loadLanguage('por');
+    await worker2.loadLanguage('por');
+    await worker3.loadLanguage('por');
+    await worker1.initialize('por');
+    await worker2.initialize('por');
+    await worker3.initialize('por');
+    scheduler.addWorker(worker1);
+    scheduler.addWorker(worker2);
+    scheduler.addWorker(worker3);
+    const results = await Promise.all(rectangles.map((rectangle) => (
+      scheduler.addJob('recognize', imagePath, { rectangle })
+    )));
+    let text = (results.map(r => r.data.text));
+    await scheduler.terminate();
+    log.ocrImage()
+    return text
+  } catch (error) {
+    throw new Error('Failed to recognize characters', error)
+  }
 }
 
-function processData(text1) {
-  let text = text1.join('')
-  // if (!text) throw new Error('ProcessData must receive a string')
-  text = text.replace(/\s/g, '')
-  text = text.replace("-", '')
-  text = text.replace("'", '')
-  text = text.replace('"', '')
+function processData(textArr) {
+  let data = textArr.join('')
+  data = data.replace(/\s/g, '')
+  // data = data.replace("-", '')
+  // data = data.replace("'", '')
+  // data = data.replace('"', '')
   log.processData()
-  console.log(text)
-  return text
+  return data
 }
 
-function getValues(text, imagePath) {
+function getValues(data, imagePath) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
   let re = Object.values(regex)
@@ -181,11 +147,11 @@ function getValues(text, imagePath) {
   const result = []
 
   for (let i = 0; i < re.length; i++) {
-    let match = re[i].exec(text)
+    let match = re[i].exec(data)
     if (match !== null) {
       const matchValue = match[1].toString()
       result.push(matchValue)
-      text = text.replace(match[0], (chalk.bgGreen('___')))
+      data = data.replace(match[0], (chalk.bgGreen('___')))
     } else {
       errCounter++
       result.push("#ERROR")
@@ -193,7 +159,7 @@ function getValues(text, imagePath) {
     if (i == 2 && repeatCalibraçãoTC) { i = 0; repeatCalibraçãoTC = false; }
     if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
   }
-  if (errCounter) { 
+  if (errCounter) {
     log.getValuesError(errCounter)
     errors[imagePath] = errCounter
   }
@@ -219,12 +185,13 @@ function addHandFillFields(to) {
 
 async function appendValues(arrValues) {
   await fs.promises.appendFile(tsvFilePath, arrValues.join("\t") + '\n', 'utf8', (err) => {
-    if (err) throw new Error('Failed to append values', err) })
+    if (err) throw new Error('Failed to append values', err)
+  })
   log.appendValues()
 }
 
 function sleep(ms) {
-  return new Promise( (resolve) => { setTimeout(resolve, ms)} )
+  return new Promise((resolve) => { setTimeout(resolve, ms) })
 }
 
 let processCounter = 1
@@ -234,12 +201,9 @@ function processCounterLog(files) {
 }
 
 async function main(imagePath) {
-  await cropImage(imagePath)
-  let crop1 = await ocrImage(imagePath)
-  // let crop2 = await ocrImage('part2')
-  // let crop3 = await ocrImage('part3')
-  let text = processData(crop1)
-  let values = getValues(text,imagePath)
+  let text = await ocrImage(imagePath)
+  let data = processData(text)
+  let values = getValues(data, imagePath)
   addHandFillFields(values)
   await appendValues(values)
 }
@@ -253,7 +217,7 @@ async function writeExcel(tsvFile) {
 function reportValuesError() {
   if (Object.keys(errors).length > 0) {
     for (const key in errors) {
-    log.reportValuesError(key, errors)
+      log.reportValuesError(key, errors)
     }
     console.log('\n')
   }
@@ -263,12 +227,13 @@ async function init() {
   log.startProgram()
   addHandFillHeader(header)
   writeHeader(header)
-  
+
   const files = await fs.promises.readdir(imagesDirPath, (err) => {
-    if (err) throw new Error('Unable to scan directory: ' + err) 
+    if (err) throw new Error('Unable to scan directory: ' + err)
   })
 
   if (files.length === 0) log.emptyFolderError()
+
   for (const file of files) {
     processCounterLog(files)
     getImageDate(imagesDirPath + file)
