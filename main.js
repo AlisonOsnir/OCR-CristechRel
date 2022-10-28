@@ -1,4 +1,4 @@
-import { createWorker } from 'tesseract.js'
+import { createWorker, createScheduler } from 'tesseract.js'
 import chalk from 'chalk'
 import Jimp from 'jimp'
 import * as fs from 'fs'
@@ -97,32 +97,79 @@ class LoadingIndicator {
   }
 }
 
-async function ocrImage(img) {
-  try {
-    const ld = new LoadingIndicator(3)
-    ld.start()
-    const worker = createWorker({
-      //logger: m => console.log(m),
-    })
-    await worker.load()
-    await worker.loadLanguage('por')
-    await worker.initialize('por')
-    const { data: { text } } = await worker.recognize(`./image_crops/${img}.png`)
-    await worker.terminate()
-    log.ocrImage(img)
-    return text
-  } catch (error) {
-    throw new Error('Failed to recognize characters', error)
-  }
+async function ocrImage(imagePath) {
+  const scheduler = createScheduler();
+const worker1 = createWorker();
+const worker2 = createWorker();
+const worker3 = createWorker();
+const rectangles = [
+  {
+    left: 1,
+    top: 20,
+    width: 200,
+    height: 30,
+  },
+  {
+    left: 282,
+    top: 140,
+    width: 228,
+    height: 310,
+  },
+  {
+    left: 512,
+    top: 100,
+    width: 220,
+    height: 313,
+  },
+];
+
+
+  await worker1.load();
+  await worker2.load();
+  await worker3.load();
+  await worker1.loadLanguage('por');
+  await worker2.loadLanguage('por');
+  await worker3.loadLanguage('por');
+  await worker1.initialize('por');
+  await worker2.initialize('por');
+  await worker3.initialize('por');
+  scheduler.addWorker(worker1);
+  scheduler.addWorker(worker2);
+  scheduler.addWorker(worker3);
+  const results = await Promise.all(rectangles.map((rectangle) => (
+    scheduler.addJob('recognize', imagePath , { rectangle })
+  )));
+  let text = (results.map(r => r.data.text));
+  console.log(text)
+  await scheduler.terminate();
+  return text
+  // try {
+  //   const ld = new LoadingIndicator(3)
+  //   ld.start()
+  //   const worker = createWorker({
+  //     //logger: m => console.log(m),
+  //   })
+  //   await worker.load()
+  //   await worker.loadLanguage('por')
+  //   await worker.initialize('por')
+  //   const { data: { text } } = await worker.recognize(`./image_crops/${img}.png`)
+  //   await worker.terminate()
+  //   log.ocrImage(img)
+  //   return text
+  // } catch (error) {
+  //   throw new Error('Failed to recognize characters', error)
+  
 }
 
-function processData(text1, text2, text3) {
-  let text = (text1 + text2 + text3)
-  if (!text) throw new Error('ProcessData must receive a string')
+function processData(text1) {
+  let text = text1.join('')
+  // if (!text) throw new Error('ProcessData must receive a string')
   text = text.replace(/\s/g, '')
+  text = text.replace("-", '')
   text = text.replace("'", '')
   text = text.replace('"', '')
   log.processData()
+  console.log(text)
   return text
 }
 
@@ -188,10 +235,10 @@ function processCounterLog(files) {
 
 async function main(imagePath) {
   await cropImage(imagePath)
-  let crop1 = await ocrImage('part1')
-  let crop2 = await ocrImage('part2')
-  let crop3 = await ocrImage('part3')
-  let text = processData(crop1, crop2, crop3)
+  let crop1 = await ocrImage(imagePath)
+  // let crop2 = await ocrImage('part2')
+  // let crop3 = await ocrImage('part3')
+  let text = processData(crop1)
   let values = getValues(text,imagePath)
   addHandFillFields(values)
   await appendValues(values)
