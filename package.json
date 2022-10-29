@@ -3,7 +3,6 @@
   "version": "1.2.0",
   "description": "Reconhecimento ótico de caracteres aplicado a relatórios de teste",
   "main": "main.js",
-  "type": "module",
   "scripts": {
     "start": "node main.js"
   },

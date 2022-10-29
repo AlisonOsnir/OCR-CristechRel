@@ -1,9 +1,9 @@
-import { createWorker, createScheduler } from 'tesseract.js'
-import chalk from 'chalk'
-import * as fs from 'fs'
-import xlsx from 'xlsx'
-import process from "process"
-import log from './logs.mjs'
+const { createWorker, createScheduler } = require('tesseract.js')
+const chalk = require('chalk')
+const fs = require('fs')
+const xlsx = require('xlsx')
+const process = require("process")
+const log = require('./logs.cjs')
 
 const imagesDirPath = './screenshots/'
 const tsvFilePath = './outputs/values.tsv'
