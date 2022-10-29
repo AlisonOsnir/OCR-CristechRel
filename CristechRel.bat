@@ -12,6 +12,7 @@ CLS
 
 START /B /WAIT node main.js
 @ECHO.
+ECHO Continue para abrir o arquivo no excel:
 PAUSE
 
 START ./outputs/output.xls

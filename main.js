@@ -3,13 +3,11 @@ import chalk from 'chalk'
 import * as fs from 'fs'
 import xlsx from 'xlsx'
 import process from "process"
-
 import log from './logs.mjs'
 
-const imagesDirPath = './screenshots-teste/'
+const imagesDirPath = './screenshots/'
 const tsvFilePath = './outputs/values.tsv'
 const xlsFilePath = './outputs/output.xls'
-
 const errors = {}
 
 const header = [
@@ -19,28 +17,28 @@ const header = [
 ]
 
 const handFillFields = {
-  'Produto': '""',
-  'VersaoFW': '""',
-  'TCExterno': '""',
-  'Data': '""',
-  'Responsavel': '""',
-  'Verify-1to9': 'OK',
-  'Reles': 'OK',
-  'I(MA)': 'OK',
-  'I(A)': 'OK',
-  'RS232/485': 'OK',
-  'Burn-in(IN)': '18:00',
+  'Produto'     : '""',
+  'VersaoFW'    : '""',
+  'TCExterno'   : '""',
+  'Data'        : '""',
+  'Responsavel' : '""',
+  'Verify-1to9' : 'OK',
+  'Reles'       : 'OK',
+  'I(MA)'       : 'OK',
+  'I(A)'        : 'OK',
+  'RS232/485'   : 'OK',
+  'Burn-in(IN)' : '18:00',
   'Burn-in(Out)': '06:00'
 }
 
 const regex = {
-  'Serial': /númerodesérie:(\d{6})/i,
-  'TC-CR': /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
-  'TC-CL': /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
-  'RTD-A': /RTDA:?(\d{3}(?:,\d)?)/i,
-  'RTD-B': /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
-  'Saida-1mA': /[1i]ma:?(\d{2})/i,
-  'Saida-5mA': /[5s]ma:?(\d{2})/i,
+  'Serial'    : /númerodesérie:(\d{6})/i,
+  'TC-CR'     : /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
+  'TC-CL'     : /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
+  'RTD-A'     : /RTDA:?(\d{3}(?:,\d)?)/i,
+  'RTD-B'     : /RTD[5B8]?:(\d{3}(?:,\d)?)/i,
+  'Saida-1mA' : /[1i]ma:?(\d{2})/i,
+  'Saida-5mA' : /[5s]ma:?(\d{2})/i,
   'Saida-10mA': /10ma:?(\d{2})/i,
   'Saida-20mA': /20ma:?(\d{2})/i,
 }
@@ -58,9 +56,25 @@ function writeHeader(header) {
   log.writeHeader()
 }
 
-class LoadingIndicator {
-  constructor(size) {
-    this.size = size
+let processCounter = 1
+function processCounterLog(files) {
+  console.log(chalk.green(`>>> Processing: ${processCounter}/${files.length}`))
+  processCounter++
+}
+
+function getImageDate(imagePath) {
+  fs.stat(imagePath, (err, stats) => {
+    if (err) { throw new Error('Last modified date not found', err) }
+    let date = stats.mtime
+    date = date.toLocaleDateString()
+    handFillFields.Data = date
+    log.getImageDate(date)
+  })
+}
+
+class LoadingArrow {
+  constructor(qtde) {
+    this.qtde = qtde
     this.cursor = 0
     this.timer = null
   }
@@ -68,7 +82,7 @@ class LoadingIndicator {
     this.timer = setInterval(() => {
       process.stdout.write(">")
       this.cursor++;
-      if (this.cursor >= this.size) {
+      if (this.cursor >= this.qtde) {
         clearTimeout(this.timer)
       }
     }, 1500)
@@ -76,65 +90,59 @@ class LoadingIndicator {
 }
 
 async function ocrImage(imagePath) {
-  try {
-    const ld = new LoadingIndicator(3)
-    ld.start()
+  new LoadingArrow(3).start()
+  
+  const scheduler = createScheduler();
+  const worker1 = createWorker();
+  const worker2 = createWorker();
+  const worker3 = createWorker();
+  const rectangles = [
+    {
+      left: 1,
+      top: 20,
+      width: 200,
+      height: 30,
+    },
+    {
+      left: 282,
+      top: 140,
+      width: 228,
+      height: 310,
+    },
+    {
+      left: 512,
+      top: 100,
+      width: 220,
+      height: 313,
+    },
+  ];
 
-    const scheduler = createScheduler();
-    const worker1 = createWorker();
-    const worker2 = createWorker();
-    const worker3 = createWorker();
-    const rectangles = [
-      {
-        left: 1,
-        top: 20,
-        width: 200,
-        height: 30,
-      },
-      {
-        left: 282,
-        top: 140,
-        width: 228,
-        height: 310,
-      },
-      {
-        left: 512,
-        top: 100,
-        width: 220,
-        height: 313,
-      },
-    ];
-
-    await worker1.load();
-    await worker2.load();
-    await worker3.load();
-    await worker1.loadLanguage('por');
-    await worker2.loadLanguage('por');
-    await worker3.loadLanguage('por');
-    await worker1.initialize('por');
-    await worker2.initialize('por');
-    await worker3.initialize('por');
-    scheduler.addWorker(worker1);
-    scheduler.addWorker(worker2);
-    scheduler.addWorker(worker3);
-    const results = await Promise.all(rectangles.map((rectangle) => (
-      scheduler.addJob('recognize', imagePath, { rectangle })
-    )));
-    let text = (results.map(r => r.data.text));
-    await scheduler.terminate();
-    log.ocrImage()
-    return text
-  } catch (error) {
-    throw new Error('Failed to recognize characters', error)
-  }
+  await worker1.load();
+  await worker2.load();
+  await worker3.load();
+  await worker1.loadLanguage('por');
+  await worker2.loadLanguage('por');
+  await worker3.loadLanguage('por');
+  await worker1.initialize('por');
+  await worker2.initialize('por');
+  await worker3.initialize('por');
+  scheduler.addWorker(worker1);
+  scheduler.addWorker(worker2);
+  scheduler.addWorker(worker3);
+  const results = await Promise.all(rectangles.map((rectangle) => (
+    scheduler.addJob('recognize', imagePath, { rectangle })
+  )));
+  let text = (results.map(r => r.data.text));
+  await scheduler.terminate();
+  log.ocrImage()
+  return text
 }
 
 function processData(textArr) {
   let data = textArr.join('')
   data = data.replace(/\s/g, '')
-  // data = data.replace("-", '')
-  // data = data.replace("'", '')
-  // data = data.replace('"', '')
+  data = data.replace("'", '')
+  data = data.replace('"', '')
   log.processData()
   return data
 }
@@ -167,16 +175,6 @@ function getValues(data, imagePath) {
   return result
 }
 
-function getImageDate(imagePath) {
-  fs.stat(imagePath, (err, stats) => {
-    if (err) { throw new Error('Last modified date not found', err) }
-    let date = stats.mtime
-    date = date.toLocaleDateString()
-    handFillFields.Data = date
-    log.getImageDate(date)
-  })
-}
-
 function addHandFillFields(to) {
   let arr = Object.values(handFillFields)
   to.splice(1, 0, ...arr)
@@ -188,24 +186,6 @@ async function appendValues(arrValues) {
     if (err) throw new Error('Failed to append values', err)
   })
   log.appendValues()
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => { setTimeout(resolve, ms) })
-}
-
-let processCounter = 1
-function processCounterLog(files) {
-  console.log(chalk.green(`>>> Processing: ${processCounter}/${files.length}`))
-  processCounter++
-}
-
-async function main(imagePath) {
-  let text = await ocrImage(imagePath)
-  let data = processData(text)
-  let values = getValues(data, imagePath)
-  addHandFillFields(values)
-  await appendValues(values)
 }
 
 async function writeExcel(tsvFile) {
@@ -221,6 +201,18 @@ function reportValuesError() {
     }
     console.log('\n')
   }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => { setTimeout(resolve, ms) })
+}
+
+async function main(imagePath) {
+  let text = await ocrImage(imagePath)
+  let data = processData(text)
+  let values = getValues(data, imagePath)
+  addHandFillFields(values)
+  await appendValues(values)
 }
 
 async function init() {

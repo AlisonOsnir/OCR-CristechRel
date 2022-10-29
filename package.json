@@ -1,21 +1,20 @@
 {
   "name": "ocr-cristechrel",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.2.0",
+  "description": "Reconhecimento ótico de caracteres aplicado a relatórios de teste",
   "main": "main.js",
   "type": "module",
   "scripts": {
     "start": "node main.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "AlisonOsnir",
   "license": "ISC",
   "dependencies": {
-    "chalk": "^5.0.1",
+    "chalk": "^4.1.2",
     "fs": "^0.0.1-security",
     "fs.promises": "^0.1.2",
-    "jimp": "^0.16.0",
-    "tesseract.js": "^2.1.5",
+    "tesseract.js": "^3.0.3",
     "xlsx": "^0.18.5"
   }
 }
