@@ -4,7 +4,7 @@
   "description": "Reconhecimento ótico de caracteres aplicado a relatórios de teste",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "electron ."
   },
   "keywords": [],
   "author": "AlisonOsnir",
@@ -15,5 +15,8 @@
     "fs.promises": "^0.1.2",
     "tesseract.js": "^3.0.3",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^23.2.1"
   }
 }
