@@ -1,24 +1,36 @@
-const imagesDirPath = './screenshots/'
+const dirInput = document.querySelector('#dirInput')
+const selectDirBtn = document.querySelector('.selectDir')
+const form = document.querySelector('form')
+const terminal = document.querySelector('.terminal')
+const processBar = document.querySelector('progress')
 
+let diretoryPath = null
 let files = null
-
-window.api.receive("fromMain", (data) => {
-  console.log(`Received ${data} from main process`);
-  files = data
-  init()
-});
-
-window.api.send("toMain", imagesDirPath);
-
-
-
-
-
-
 
 const tsvFilePath = './outputs/values.tsv'
 const xlsFilePath = './outputs/output.xls'
 const errors = {}
+
+const header = [
+  'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
+  'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
+  'Saida_mA2-1mA', 'Saida_mA2-5mA', 'Saida_mA2-10mA', 'Saida_mA2-20mA'
+]
+
+const inputValues = {
+  'Produto': null,
+  'VersaoFW': null,
+  'TCExterno': null,
+  'Data': null,
+  'Responsavel': null,
+  'Verify-1to9': 'OK',
+  'Reles': 'OK',
+  'I(MA)': 'OK',
+  'I(A)': 'OK',
+  'RS232/485': 'OK',
+  'BurninIn': null,
+  'BurninOut': null
+}
 
 const regex = {
   'Serial': /númerodesérie:(\d{6})/i,
@@ -32,19 +44,64 @@ const regex = {
   'Saida-20mA': /20ma:?(\d{2})/i,
 }
 
+
+window.api.receive("fromMain", (data) => {
+  // console.log(`Received from main process: \n ${JSON.stringify(data)}`);
+  files = data
+  initialize()
+});
+
+selectDirBtn.addEventListener('click', _ => {
+  window.api.selectFolder().then(result => dirInput.value = result + '\\')
+})
+
+form.addEventListener('submit', event => {
+  event.preventDefault()
+
+  diretoryPath = dirInput.value
+  inputValues.Produto = form.produto.value
+  inputValues.VersaoFW = form.firmware.value
+  inputValues.TCExterno = form.externo.value
+  inputValues.Responsavel = form.responsavel.value.toUpperCase()
+  inputValues.BurninIn = form.entrada.value
+  inputValues.BurninOut = form.saida.value
+
+  window.api.send("toMain", diretoryPath);
+})
+
+
+function scrollToBottom () {
+  terminal.scrollIntoView({ behavior: "smooth", block: "end" });
+}
+
+function print(string) {
+  terminal.innerHTML += `<span>${string}</span><br>`
+  scrollToBottom()
+}
+
+function printError(string) {
+  terminal.innerHTML += `<span class="error">${string}</span><br>`
+  scrollToBottom()
+}
+
+function printAllValuesErrors() {
+  if (Object.keys(errors).length > 0) {
+    terminal.innerHTML += '<ul>'
+    for (const key in errors) {
+      terminal.innerHTML += `
+        <li class="errorReport">${log.reportValuesErrors(key, errors[key])}</li>`
+    }
+    terminal.innerHTML += '</ul><br>'
+  }
+}
+
 let recognizingProcessStart = 0
 async function ocrImage(imagePath) {
   const scheduler = await Tesseract.createScheduler();
   const worker = await Tesseract.createWorker({
-    logger: (m) => {
-      if (m.status === 'recognizing text' && m.progress === 0) {
-        recognizingProcessStart++
-      }
-
-      if (recognizingProcessStart == 2) {
-        console.log(m.progress.toFixed(1))
-      }
-    }
+    // logger: (m) => {
+    //     console.log(m)
+    //   }
   });
 
   const rectangles = [
@@ -80,20 +137,20 @@ async function ocrImage(imagePath) {
   await scheduler.terminate();
 
   recognizingProcessStart = 0
-  // log.ocrImage()
+  print(log.ocrImage)
   return text
 }
 
-function processData(textArr) {
-  let data = textArr.join('')
+function sanitizeText(stringArray) {
+  let data = stringArray.join('')
   data = data.replace(/\s/g, '')
   data = data.replace("'", '')
   data = data.replace('"', '')
-  // log.processData()
+  print(log.processData)
   return data
 }
 
-function getValues(data, imagePath) {
+function getValues(data, fileName) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
   let re = Object.values(regex)
@@ -105,7 +162,6 @@ function getValues(data, imagePath) {
     if (match !== null) {
       const matchValue = match[1].toString()
       result.push(matchValue)
-      // data = data.replace(match[0], (chalk.bgGreen('___')))
       data = data.replace(match[0], '___')
     } else {
       errCounter++
@@ -115,44 +171,75 @@ function getValues(data, imagePath) {
     if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
   }
   if (errCounter) {
-    // log.getValuesError(errCounter)
-    errors[imagePath] = errCounter
+    printError(log.getValuesErrors(errCounter))
+    errors[fileName.slice(0, -4)] = errCounter
   }
-  // log.getValues()
+  print(log.getValues)
   return result
 }
 
-
-
-function sleep(ms) {
-  return new Promise((resolve) => { setTimeout(resolve, ms) })
+let processCounter = 1
+function processCounterLog() {
+  print(log.process(processCounter, files.length))
+  processCounter++
 }
 
-async function main(imagePath) {
-  let text = await ocrImage(imagePath)
-  let data = processData(text)
-  let values = getValues(data, imagePath)
-  console.log(values)
+function addHandFillHeader(to) {
+  let arr = Object.keys(inputValues)
+  to.splice(1, 0, ...arr)
+  print(log.addHandFillHeader)
 }
 
-// async function init() {
-//   await main(imagesDirPath + '065549.png')
-//   sleep(3000)
-// }
+function addHandFillFields(to) {
+  let arr = Object.values(inputValues)
+  to.splice(1, 0, ...arr)
+  print(log.addHandFillFields)
+}
 
-async function init() {
-  const initial = new Date()
+function reportValuesError() {
+  if (Object.keys(errors).length > 0) {
+    for (const key in errors) {
+      print(log.reportValuesError(key, error))
+      console.log(errors)
+    }
+  }
+}
 
-  // if (files.length === 0) log.emptyFolderError()
+async function initialize() {
+  print(log.startProgram)
+  addHandFillHeader(header)
+  window.api.writeHeader(tsvFilePath, header)
+  print(log.writeHeader)
 
-  for (const file of files) {
-    // processCounterLog(files)
-    // getImageDate(imagesDirPath + file)
-    await main(imagesDirPath + file)
-    // sleep(3000)
+
+  if (files.length === 0) {
+    printError(log.emptyFolderError)
   }
 
-  const final = new Date()
+  processBar.setAttribute('max', files.length)
+  processBar.value = 0.2
+  processCounter = 1
 
-  console.log((final - initial) / 1000)
+  for (const { fileName, fileDate } of files) {
+    processCounterLog()
+    print(log.imageName(fileName))
+    print(log.imageDate(fileDate))
+    inputValues.Data = fileDate
+    let text = await ocrImage(diretoryPath + fileName)
+    let data = sanitizeText(text)
+    let values = getValues(data, fileName)
+    addHandFillFields(values)
+    // console.log(values)
+    window.api.appendValues(tsvFilePath, values)
+    print(log.appendValues)
+    processBar.value = processCounter - 1
+  }
+
+  await window.api.writeExcel(tsvFilePath, xlsFilePath)
+  print(log.writeExcel)
+  printAllValuesErrors()
+  print(log.finishProgram)
 }
+
+// Append line on respective excel workbook
+// Create AVR Case

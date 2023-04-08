@@ -1,15 +1,73 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Hello World!</title>
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-    <script src="./tesseract.min.js"></script>
+<html lang="pt-bt">
 
-    <!-- You can also require other files to run in this process -->
-    <script src="./renderer.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <title>Cristech Rel</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./tesseract.min.js"></script>
+  <script src="./logMessages.cjs"></script>
+  <script defer src="./renderer.js"></script>
+</head>
 
-  </body>
+<body>
+  <h1>CRISTECH REL</h1>
+
+  <div class="container-diretorio">
+    <label for="diretorio"> Diretório: </label>
+    <input type="text" id="dirInput" required value="./screenshots/">
+    <button class="selectDir">Procurar</button>
+  </div>
+
+  <div class="container">
+    <form>
+      <fieldset>
+        <legend>Informações Gerais</legend>
+        <label for="produto"> Produto: </label>
+        <select name="produto" required>
+          <option value="TM1">TM1</option>
+          <option value="TM2">TM2</option>
+          <option value="AVR">AVR</option>
+        </select>
+
+        <label for="firmware"> Firmware: </label>
+        <input type="text" name="firmware">
+
+        <label for="externo"> Externo: </label>
+        <select name="externo">
+          <option value="X">Sim</option>
+          <option value="N/A">Não</option>
+        </select>
+
+        <label for="responsavel"> Responsável: </label>
+        <input type="text" name="responsavel">
+      </fieldset>
+
+      <fieldset>
+        <legend>Burn-in</legend>
+        <div class="container-burnIn">
+          <label for="entrada"> Entrada:
+            <input type="time" name="entrada" value="18:00">
+          </label>
+
+          <label for="saida"> Saida:
+            <input type="time" name="saida" value="06:00">
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="container-buttons">
+        <button type="submit">Iniciar</button>
+      </div>
+    </form>
+
+    <div class="container-terminal">
+      <div class="terminal"></div>
+    </div>
+  </div>
+
+  <progress min="0" value="0"></progress>
+
+</body>
+
 </html>
