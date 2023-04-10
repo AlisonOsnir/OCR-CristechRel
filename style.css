@@ -1,24 +1,32 @@
 :root {
-  --bg-color: #c9c9c9;
-  --title-color: #000000;
+  --font-principal: Calibri, sans-serif;
+  --color: #FFFFFF;
+  --bg-color: #11464E;
+  --title-color: #FFFFFF;
+  --fieldset-border-color: #FFFFFF;
   --button-color: #9fccff;
   --button-border-color: #666666;
-  --terminal-bg-color: #F2F2F2;
   --terminal-color: #000000;
-  --fieldset-border-color: #666666;
-  --font-principal: Calibri, sans-serif;
-  --branco: #FFFFFF;
-  --vermelho: #FF0000;
+  --error-color: #FF0000;
+  --warning-color: #ffd900;
+  --terminal-bg-color: #F2F2F2;
+  --progressBar-color: #009400;
+  --progressBar-bg-color: #272727; 
 }
 
 .error {
-  color: var(--vermelho);
+  color: var(--error-color);
 }
 
 .errorReport {
   list-style: none;
-  color: var(--branco);
-  background-color: var(--vermelho);
+  color: #FFFFFF;
+  background-color: var(--error-color);
+}
+
+.warning {
+  list-style: none;
+  background-color: var(--warning-color);
 }
 
 body {
@@ -32,6 +40,7 @@ h1 {
   text-align: center;
   font-family: var(--font-principal);
   font-size: 1.7em;
+  margin: 0.4em;
   color: var(--title-color);
 }
 
@@ -43,50 +52,55 @@ h1 {
 }
 
 .container-diretorio label {
+  color: var(--color);
   margin-right: .5em;
 }
 
 .container-diretorio input {
-  width: 50%;
+  width: 600px;
   font-size: .7em;
 }
 
 .container-diretorio button {
   font-size: .7em;
+  cursor: pointer;
 }
 
 .container {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
+  padding: 0 20px;
 }
 
 form {
   display: block;
-  width: 50%;
+  width: 500px;
 }
 
 fieldset {
+  color: var(--color);
   border: 1px solid var(--fieldset-border-color);
   border-radius: 5px;
   margin: 0 1em 1em 0;
-  padding: 1em;
+  padding: 0.7em;
 }
 
 form label {
   display: inline-block;
-  width: 30%;
+  width: 40%;
   margin: 0.4em 0;
   text-align: right;
+  color: var(--color);
 }
 
 form input {
-  width: 300px;
+  width: 200px;
   font-size: .8em;
 }
 
 form select {
-  width: 308px;
+  width: 208px;
   font-size: .8em;
 }
 
@@ -104,10 +118,13 @@ form select {
 .container-terminal {
   display: block;
   position: relative;
-  width: 40%;
-  height: 460px;
+  top: 7px;
+  width: 400px;
+  height: 413px;
   padding: 1em;
   font-size: 0.7em;
+  border: 1px solid var(--fieldset-border-color);
+  border-radius: 5px;
   color: var(--terminal-color);
   background-color: var(--terminal-bg-color);
   overflow-y: scroll;
@@ -116,19 +133,38 @@ form select {
 
 .container-buttons {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: bottom;
+  margin-right: 1em;
 }
 
-.container-buttons button {
+.container-buttons .initializeBtn {
+  width: 210px;
   padding: 0.5em 1em;
   font-size: .8em;
+  cursor: pointer;
 }
 
-progress {
+.container-buttons .outputBtn {
+  width: 105px;
+  padding: 0.5em 1em;
+  font-size: .8em;
+  cursor: pointer;
+}
+
+.progress-container {
   display: block;
-  width: 96%;
-  height: 1.7em;
-  margin: 1em auto .5em;
-  border-radius: 0;
+  width: 91%;
+  height: 1.5em;
+  margin: 1em auto 0;
+  border-radius: 0.6rem;
+  background: var(--progressBar-bg-color);
+}
+
+.progress-container .progress {
+  height: 100%;
+  width: 0;
+  border-radius: 0.6rem;
+  background: var(--progressBar-color);
+  transition: width 0.2s ease;
 }

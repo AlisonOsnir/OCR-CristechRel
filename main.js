@@ -7,8 +7,8 @@ let mainWindow;
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1100,
+    height: 730,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
@@ -47,8 +47,8 @@ ipcMain.on("toMain", (event, args) => {
   const files = fs.readdirSync(args, (err) => {
     if (err) throw new Error('Unable to scan directory: ' + err)
   })
-
-  const fileData = files.map(file => {
+  .filter(file => path.extname(file) === '.png')
+  .map(file => {
     const fileStats = fs.statSync(args + file, (err, stats) => {
       if (err) { throw new Error('Last modified date not found', err) }
     })
@@ -58,8 +58,8 @@ ipcMain.on("toMain", (event, args) => {
       'fileDate': fileStats.mtime.toLocaleDateString()
     }
   })
-
-  mainWindow.webContents.send("fromMain", fileData);
+  
+  mainWindow.webContents.send("fromMain", files);
 })
 
 ipcMain.handle('fileSystem:writeHeader', (event, filePath, header) => {

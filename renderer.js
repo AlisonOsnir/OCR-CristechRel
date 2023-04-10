@@ -1,38 +1,23 @@
-const dirInput = document.querySelector('#dirInput')
-const selectDirBtn = document.querySelector('.selectDir')
+const directoryInput = document.querySelector('#directoryInput')
+const selectDirectoryBtn = document.querySelector('.selectDirectory')
+const initializeBtn = document.querySelector('.initializeBtn')
+const outputBtn = document.querySelectorAll('.outputBtn')
 const form = document.querySelector('form')
 const terminal = document.querySelector('.terminal')
-const processBar = document.querySelector('progress')
+const progressbar = document.querySelector(".progress");
 
-let diretoryPath = null
-let files = null
 
-const tsvFilePath = './outputs/values.tsv'
+const tsvFilePath = './outputs/output.tsv'
 const xlsFilePath = './outputs/output.xls'
 const errors = {}
 
-const header = [
-  'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
-  'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
-  'Saida_mA2-1mA', 'Saida_mA2-5mA', 'Saida_mA2-10mA', 'Saida_mA2-20mA'
-]
+let diretoryPath = null
+let files = null
+let header = []
+let inputValues = {}
+let processCounter = 1
 
-const inputValues = {
-  'Produto': null,
-  'VersaoFW': null,
-  'TCExterno': null,
-  'Data': null,
-  'Responsavel': null,
-  'Verify-1to9': 'OK',
-  'Reles': 'OK',
-  'I(MA)': 'OK',
-  'I(A)': 'OK',
-  'RS232/485': 'OK',
-  'BurninIn': null,
-  'BurninOut': null
-}
-
-const regex = {
+const regExp = {
   'Serial': /númerodesérie:(\d{6})/i,
   'TC-CR': /correntedereferência:((?:\d,\d{2})|(?:n\/a))/i,
   'TC-CL': /correntelida:((?:\d,\d{2})|(?:n\/a))/i,
@@ -44,67 +29,92 @@ const regex = {
   'Saida-20mA': /20ma:?(\d{2})/i,
 }
 
+function selectTemplates(productName) {
+  switch (productName) {
+    case 'TM1':
+    case 'TM2': {
+      header = [
+        'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
+        'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
+        'Saida_mA2-1mA', 'Saida_mA2-5mA', 'Saida_mA2-10mA', 'Saida_mA2-20mA'
+      ]
 
-window.api.receive("fromMain", (data) => {
-  // console.log(`Received from main process: \n ${JSON.stringify(data)}`);
-  files = data
-  initialize()
-});
+      inputValues = {
+        'Produto': null,
+        'VersaoFW': null,
+        'TCExterno': null,
+        'Data': null,
+        'Responsavel': null,
+        'Verify-1to9': 'OK',
+        'Reles': 'OK',
+        'I(MA)': 'OK',
+        'I(A)': 'OK',
+        'RS232/485': 'OK',
+        'BurninIn': null,
+        'BurninOut': null
+      }
+      console.log('TM template selected:', { header, inputValues })
+      break
+    }
 
-selectDirBtn.addEventListener('click', _ => {
-  window.api.selectFolder().then(result => dirInput.value = result + '\\')
-})
+    case 'AVR': {
+      header = ['Serial', 'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA']
 
-form.addEventListener('submit', event => {
-  event.preventDefault()
+      inputValues = {
+        'Produto': null,
+        'VersaoFW': null,
+        'TCExterno': null,
+        'Data': null,
+        'Responsavel': null,
+        'BurninIn': null,
+        'BurninOut': null
+      }
+      console.log('AVR template selected:', { header, inputValues })
+      break
+    }
+    default: {
+      printError(log.templateErrors)
+      throw new Error(log.templateErrors)
+    }
+  }
+}
 
-  diretoryPath = dirInput.value
-  inputValues.Produto = form.produto.value
-  inputValues.VersaoFW = form.firmware.value
-  inputValues.TCExterno = form.externo.value
-  inputValues.Responsavel = form.responsavel.value.toUpperCase()
-  inputValues.BurninIn = form.entrada.value
-  inputValues.BurninOut = form.saida.value
-
-  window.api.send("toMain", diretoryPath);
-})
-
-
-function scrollToBottom () {
+function scrollToBottom() {
   terminal.scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
-function print(string) {
-  terminal.innerHTML += `<span>${string}</span><br>`
+function updateProgressBar(progress) {
+  progressbar.style.width = `${progress}%`
+}
+
+function print(message) {
+  terminal.innerHTML += `<span>${message}</span><br>`
   scrollToBottom()
 }
 
-function printError(string) {
-  terminal.innerHTML += `<span class="error">${string}</span><br>`
+function printError(message) {
+  terminal.innerHTML += `<span class="error">${message}</span><br>`
   scrollToBottom()
 }
 
 function printAllValuesErrors() {
   if (Object.keys(errors).length > 0) {
-    terminal.innerHTML += '<ul>'
+    terminal.innerHTML += `<p class="warning">${log.checkValuesWarn}</p>`
     for (const key in errors) {
       terminal.innerHTML += `
-        <li class="errorReport">${log.reportValuesErrors(key, errors[key])}</li>`
+        <li class="errorReport">${log.reportErrors(key, errors[key])}</li>`
     }
-    terminal.innerHTML += '</ul><br>'
+    terminal.innerHTML += '<br>'
   }
 }
 
-let recognizingProcessStart = 0
-async function ocrImage(imagePath) {
+async function recognize(imagePath) {
   const scheduler = await Tesseract.createScheduler();
   const worker = await Tesseract.createWorker({
-    // logger: (m) => {
-    //     console.log(m)
-    //   }
+    // logger: (m) => console.log(m)
   });
 
-  const rectangles = [
+  const columnAreas = [
     {
       left: 1,
       top: 20,
@@ -129,117 +139,160 @@ async function ocrImage(imagePath) {
   await worker.initialize('por');
   scheduler.addWorker(worker);
 
-  const results = await Promise.all(rectangles.map((rectangle) => (
+  const results = await Promise.all(columnAreas.map((rectangle) => (
     scheduler.addJob('recognize', imagePath, { rectangle })
   )));
 
   let text = (results.map(r => r.data.text));
   await scheduler.terminate();
 
-  recognizingProcessStart = 0
-  print(log.ocrImage)
+  print(log.recognize)
   return text
 }
 
-function sanitizeText(stringArray) {
-  let data = stringArray.join('')
-  data = data.replace(/\s/g, '')
-  data = data.replace("'", '')
-  data = data.replace('"', '')
-  print(log.processData)
-  return data
+function sanitizeText(textArray) {
+  let text = textArray.join('')
+  text = text.replace(/\s/g, '')
+  text = text.replace("'", '')
+  text = text.replace('"', '')
+  print(log.sanitize)
+  return text
 }
 
-function getValues(data, fileName) {
+function extractValues(text, fileName) {
   let repeatCalibraçãoSaida = true
   let repeatCalibraçãoTC = true
-  let re = Object.values(regex)
-  let errCounter = 0
+  let errorsCounter = 0
+
+  const re = Object.values(regExp)
   const result = []
 
   for (let i = 0; i < re.length; i++) {
-    let match = re[i].exec(data)
+    let match = re[i].exec(text)
+
     if (match !== null) {
       const matchValue = match[1].toString()
       result.push(matchValue)
-      data = data.replace(match[0], '___')
+      text = text.replace(match[0], '___')
     } else {
-      errCounter++
+      errorsCounter++
       result.push("#ERROR")
     }
-    if (i == 2 && repeatCalibraçãoTC) { i = 0; repeatCalibraçãoTC = false; }
-    if (i == 8 && repeatCalibraçãoSaida) { i = 4; repeatCalibraçãoSaida = false; }
+
+    if (i === 2 && repeatCalibraçãoTC) {
+      i = 0
+      repeatCalibraçãoTC = false
+    }
+
+    if (i === 8 && repeatCalibraçãoSaida) {
+      i = 4
+      repeatCalibraçãoSaida = false
+    }
   }
-  if (errCounter) {
-    printError(log.getValuesErrors(errCounter))
-    errors[fileName.slice(0, -4)] = errCounter
+
+  if (errorsCounter) {
+    printError(log.extractErrors(errorsCounter))
+    errors[fileName.slice(0, -4)] = errorsCounter
   }
-  print(log.getValues)
+
+  print(log.extract)
   return result
 }
 
-let processCounter = 1
 function processCounterLog() {
   print(log.process(processCounter, files.length))
   processCounter++
 }
 
-function addHandFillHeader(to) {
-  let arr = Object.keys(inputValues)
-  to.splice(1, 0, ...arr)
-  print(log.addHandFillHeader)
-}
-
-function addHandFillFields(to) {
-  let arr = Object.values(inputValues)
-  to.splice(1, 0, ...arr)
-  print(log.addHandFillFields)
-}
-
-function reportValuesError() {
-  if (Object.keys(errors).length > 0) {
-    for (const key in errors) {
-      print(log.reportValuesError(key, error))
-      console.log(errors)
-    }
-  }
+function insertInputs(to, insertObjectKeys = true) {
+  let array = insertObjectKeys ? Object.keys(inputValues) : Object.values(inputValues)
+  to.splice(1, 0, ...array)
 }
 
 async function initialize() {
-  print(log.startProgram)
-  addHandFillHeader(header)
-  window.api.writeHeader(tsvFilePath, header)
-  print(log.writeHeader)
-
-
   if (files.length === 0) {
     printError(log.emptyFolderError)
+    throw new Error(log.templateErrors)
   }
 
-  processBar.setAttribute('max', files.length)
-  processBar.value = 0.2
+  print(log.startProgram)
+  disableButtons()
+  insertInputs(header, true)
+  window.api.writeHeader(tsvFilePath, header)
+  print(log.writeHeader)
   processCounter = 1
-
+  
   for (const { fileName, fileDate } of files) {
     processCounterLog()
     print(log.imageName(fileName))
     print(log.imageDate(fileDate))
+
     inputValues.Data = fileDate
-    let text = await ocrImage(diretoryPath + fileName)
-    let data = sanitizeText(text)
-    let values = getValues(data, fileName)
-    addHandFillFields(values)
-    // console.log(values)
+    updateProgressBar((processCounter - 1.5) * 100 / files.length)
+
+    let data = await recognize(diretoryPath + fileName)
+    let text = sanitizeText(data)
+    let values = extractValues(text, fileName)
+
+    insertInputs(values, false)
     window.api.appendValues(tsvFilePath, values)
     print(log.appendValues)
-    processBar.value = processCounter - 1
   }
 
   await window.api.writeExcel(tsvFilePath, xlsFilePath)
   print(log.writeExcel)
   printAllValuesErrors()
   print(log.finishProgram)
+  enableButtons()
+  updateProgressBar((processCounter - 1) * 100 / files.length)
 }
 
+window.api.receive("fromMain", (data) => {
+  console.log(`Received from main process: \n ${JSON.stringify(data)}`);
+  files = data
+  initialize()
+});
+
+selectDirectoryBtn.addEventListener('click', _ => {
+  window.api.selectFolder().then(result => directoryInput.value = result + '\\')
+})
+
+form.addEventListener('submit', event => {
+  event.preventDefault()
+
+  selectTemplates(form.produto.value)
+  diretoryPath = directoryInput.value
+
+  inputValues.Produto = form.produto.value
+  inputValues.VersaoFW = form.firmware.value
+  inputValues.TCExterno = form.externo.value
+  inputValues.Responsavel = form.responsavel.value.toUpperCase()
+  inputValues.BurninIn = form.entrada.value
+  inputValues.BurninOut = form.saida.value
+
+  window.api.send("toMain", diretoryPath);
+})
+
+// buttons hover style
 // Append line on respective excel workbook
-// Create AVR Case
+// Use icon Cristech?
+// impedir repeatCalibration de ocr dependendo do produto
+
+
+
+
+function disableButtons() {
+  initializeBtn.setAttribute('disabled', 'true')
+  outputBtn.forEach(button => button.setAttribute('disabled', 'true'))
+  
+  // initializeBtn.disabled = true
+  // outputBtn.forEach(button => button.disabled = true)
+}
+
+function enableButtons() {
+  initializeBtn.removeAttribute("disabled")
+  outputBtn.forEach(button => button.removeAttribute("disabled"))
+  
+  // initializeBtn.disabled = false
+  // outputBtn.forEach(button => button.disabled = false)
+}

@@ -15,8 +15,9 @@
 
   <div class="container-diretorio">
     <label for="diretorio"> Diretório: </label>
-    <input type="text" id="dirInput" required value="./screenshots/">
-    <button class="selectDir">Procurar</button>
+    <input type="text" name="diretorio" id="directoryInput" required
+      placeholder="Selecione o diretório com as screenshots" value="./screenshots/">
+    <button class="selectDirectory" autofocus>Procurar</button>
   </div>
 
   <div class="container">
@@ -31,7 +32,8 @@
         </select>
 
         <label for="firmware"> Firmware: </label>
-        <input type="text" name="firmware">
+        <input type="text" name="firmware" required 
+          placeholder="Informe a versão do firmware" value="2.22">
 
         <label for="externo"> Externo: </label>
         <select name="externo">
@@ -40,7 +42,8 @@
         </select>
 
         <label for="responsavel"> Responsável: </label>
-        <input type="text" name="responsavel">
+        <input type="text" name="responsavel" required 
+          placeholder="Informe nome do responsável" value="alison">
       </fieldset>
 
       <fieldset>
@@ -57,7 +60,11 @@
       </fieldset>
 
       <div class="container-buttons">
-        <button type="submit">Iniciar</button>
+        <button class="initializeBtn" type="submit">INICIAR</button>
+        <div>
+          <button class="outputBtn" disabled>TSV</button>
+          <button class="outputBtn" disabled>EXCEL</button>
+        </div>
       </div>
     </form>
 
@@ -66,7 +73,9 @@
     </div>
   </div>
 
-  <progress min="0" value="0"></progress>
+  <div class="progress-container">
+    <div class="progress"></div>
+  </div>
 
 </body>
 

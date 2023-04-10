@@ -1,7 +1,7 @@
 {
   "name": "ocr-cristechrel",
-  "version": "1.2.0",
-  "description": "Reconhecimento ótico de caracteres aplicado a relatórios de teste",
+  "version": "2.0.0",
+  "description": "Reconhecimento ótico de caracteres aplicado a relatórios de teste e exportação dos dados.",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
@@ -10,10 +10,6 @@
   "author": "AlisonOsnir",
   "license": "ISC",
   "dependencies": {
-    "chalk": "^4.1.2",
-    "fs": "^0.0.1-security",
-    "fs.promises": "^0.1.2",
-    "tesseract.js": "^3.0.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

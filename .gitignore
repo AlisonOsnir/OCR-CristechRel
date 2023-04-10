@@ -1,8 +1,4 @@
 node_modules 
-image_crops/part*
-outputs/values.txt
-outputs/values.tsv
-outputs/*xls
-outputs/*xlsx
+outputs/*
 por.traineddata
-eng.traineddata
+
