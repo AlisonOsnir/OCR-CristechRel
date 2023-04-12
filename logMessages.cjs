@@ -14,7 +14,7 @@ const log = {
   checkValuesWarn  : '>>> Please check all values below',
 
   templateErrors   : '>>> No valid product selected',
-  emptyFolderError : '>>> Error: Screenshot directory is empty',
+  emptyFolderError : '>>> Error: Selected directory does not contain png files',
   extractErrors    : counter => `>>> Error: ${counter} values not found`,
   reportErrors     : (key, errors) => `>>> ${key} - ${errors} values not found <br>`,
 }

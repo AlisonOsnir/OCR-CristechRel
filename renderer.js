@@ -221,7 +221,7 @@ async function initialize() {
   window.api.writeHeader(tsvFilePath, header)
   print(log.writeHeader)
   processCounter = 1
-  
+
   for (const { fileName, fileDate } of files) {
     processCounterLog()
     print(log.imageName(fileName))
@@ -254,7 +254,8 @@ window.api.receive("fromMain", (data) => {
 });
 
 selectDirectoryBtn.addEventListener('click', _ => {
-  window.api.selectFolder().then(result => directoryInput.value = result + '\\')
+  removeFocus(selectDirectoryBtn)
+  window.api.selectFolder().then(result => directoryInput.value = result)
 })
 
 form.addEventListener('submit', event => {
@@ -273,26 +274,21 @@ form.addEventListener('submit', event => {
   window.api.send("toMain", diretoryPath);
 })
 
-// buttons hover style
-// Append line on respective excel workbook
-// Use icon Cristech?
+// Trocar remover hover, começa tudo disble e Botão iniciar ficar enable quando todos os campos forem preenchidos. Data-atr poderia melhorar esse caso e o submit tbm ou criar em array com o name e itera numa template string
+
 // impedir repeatCalibration de ocr dependendo do produto
+// Append line on respective excel workbook
 
-
-
+function removeFocus(element) {
+  element.blur()
+}
 
 function disableButtons() {
   initializeBtn.setAttribute('disabled', 'true')
   outputBtn.forEach(button => button.setAttribute('disabled', 'true'))
-  
-  // initializeBtn.disabled = true
-  // outputBtn.forEach(button => button.disabled = true)
 }
 
 function enableButtons() {
   initializeBtn.removeAttribute("disabled")
   outputBtn.forEach(button => button.removeAttribute("disabled"))
-  
-  // initializeBtn.disabled = false
-  // outputBtn.forEach(button => button.disabled = false)
 }

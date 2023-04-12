@@ -37,9 +37,9 @@ ipcMain.handle('dialog:openDirectory', async () => {
     properties: ['openDirectory']
   })
   if (canceled) {
-    return
+    return ''
   } else {
-    return filePaths[0]
+    return filePaths[0] + '\\'
   }
 })
 

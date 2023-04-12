@@ -11,7 +11,7 @@
   --warning-color: #ffd900;
   --terminal-bg-color: #F2F2F2;
   --progressBar-color: #009400;
-  --progressBar-bg-color: #272727; 
+  --progressBar-bg-color: #272727;
 }
 
 .error {
@@ -66,6 +66,13 @@ h1 {
   cursor: pointer;
 }
 
+.container-diretorio button:hover {
+  background-color: #2087fd;
+  color: #FFF;
+  border: solid 2px transparent;
+  border-radius: 2px;
+}
+
 .container {
   display: flex;
   justify-content: space-evenly;
@@ -104,15 +111,53 @@ form select {
   font-size: .8em;
 }
 
-.container-burnIn {
+form .container-burnIn {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
 }
 
-.container-burnIn label,
-.container-burnIn input {
+form .container-burnIn label,
+form .container-burnIn input {
   width: initial;
+}
+
+.container-diretorio input:hover,
+form input:hover,
+form select:hover {
+  background-color: #FFFFDF;
+  border-color: transparent;
+  transition: background-color 200ms ease;
+  border-radius: 2px;
+}
+
+.container-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: bottom;
+  margin-right: 1em;
+}
+
+.container-buttons .initializeBtn {
+  width: 210px;
+  padding: 0.5em 1em;
+  font-size: .8em;
+  cursor: pointer;
+}
+
+.container-buttons .initializeBtn:enabled {
+  background-color: var(--progressBar-color);
+  color: #FFF;
+  border-color: transparent;
+  border-radius: 2px;
+  transition: background-color 200ms ease-in-out;
+}
+
+.container-buttons .outputBtn {
+  width: 105px;
+  padding: 0.5em 1em;
+  font-size: .8em;
+  cursor: pointer;
 }
 
 .container-terminal {
@@ -131,27 +176,6 @@ form select {
   overflow-wrap: break-word;
 }
 
-.container-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: bottom;
-  margin-right: 1em;
-}
-
-.container-buttons .initializeBtn {
-  width: 210px;
-  padding: 0.5em 1em;
-  font-size: .8em;
-  cursor: pointer;
-}
-
-.container-buttons .outputBtn {
-  width: 105px;
-  padding: 0.5em 1em;
-  font-size: .8em;
-  cursor: pointer;
-}
-
 .progress-container {
   display: block;
   width: 91%;
@@ -166,5 +190,5 @@ form select {
   width: 0;
   border-radius: 0.6rem;
   background: var(--progressBar-color);
-  transition: width 0.2s ease;
+  transition: width 350ms ease-in-out;
 }
