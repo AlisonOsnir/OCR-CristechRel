@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld(
     selectFolder: () => ipcRenderer.invoke('dialog:openDirectory'),
     writeHeader: (filePath, data) => ipcRenderer.invoke('fileSystem:writeHeader', filePath, data),
     appendValues: (filePath, data) => ipcRenderer.invoke('fileSystem:appendValues', filePath, data),
-    writeExcel: (filePath, destinationPath) =>
-        ipcRenderer.invoke('xlsx:writeExcel', filePath, destinationPath),
+    writeExcel: (filePath, toPath) => ipcRenderer.invoke('xlsx:writeExcel', filePath, toPath),
+    invokeExcel: (filePath) => ipcRenderer.invoke('childProcess:invokeExcel', filePath),
+    invokeNotepad: (filePath) => ipcRenderer.invoke('childProcess:invokeNotepad', filePath)
 });

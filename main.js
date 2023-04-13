@@ -47,18 +47,18 @@ ipcMain.on("toMain", (event, args) => {
   const files = fs.readdirSync(args, (err) => {
     if (err) throw new Error('Unable to scan directory: ' + err)
   })
-  .filter(file => path.extname(file) === '.png')
-  .map(file => {
-    const fileStats = fs.statSync(args + file, (err, stats) => {
-      if (err) { throw new Error('Last modified date not found', err) }
+    .filter(file => path.extname(file) === '.png')
+    .map(file => {
+      const fileStats = fs.statSync(args + file, (err, stats) => {
+        if (err) { throw new Error('Last modified date not found', err) }
+      })
+
+      return {
+        'fileName': file,
+        'fileDate': fileStats.mtime.toLocaleDateString()
+      }
     })
-    
-    return {
-      'fileName': file,
-      'fileDate': fileStats.mtime.toLocaleDateString()
-    }
-  })
-  
+
   mainWindow.webContents.send("fromMain", files);
 })
 
@@ -78,4 +78,15 @@ ipcMain.handle('xlsx:writeExcel', async (event, filePath, destinationPath) => {
   const XLSX = require('xlsx')
   const txt = XLSX.readFile(filePath, String)
   await XLSX.writeFile(txt, destinationPath)
+})
+
+ipcMain.handle('childProcess:invokeExcel', (event, filePath) => {
+  const { spawn } = require('child_process');
+  spawn("C:/Program Files/Microsoft Office/root/Office16/EXCEL.EXE",
+    [path.normalize(__dirname + filePath.slice(1))])
+})
+
+ipcMain.handle('childProcess:invokeNotepad', (event, filePath) => {
+  const { spawn } = require('child_process');
+  spawn("notepad.exe", [path.normalize(__dirname + filePath.slice(1))])
 })

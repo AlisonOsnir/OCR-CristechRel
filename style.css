@@ -117,8 +117,8 @@ form .container-burnIn {
   align-items: center;
 }
 
-form .container-burnIn label,
-form .container-burnIn input {
+.container-burnIn label,
+.container-burnIn input {
   width: initial;
 }
 
@@ -138,26 +138,31 @@ form select:hover {
   margin-right: 1em;
 }
 
-.container-buttons .initializeBtn {
+.initializeBtn {
   width: 210px;
   padding: 0.5em 1em;
   font-size: .8em;
   cursor: pointer;
 }
 
-.container-buttons .initializeBtn:enabled {
+.initializeBtn:enabled {
   background-color: var(--progressBar-color);
   color: #FFF;
   border-color: transparent;
-  border-radius: 2px;
-  transition: background-color 200ms ease-in-out;
+  border-radius: 4px;
 }
 
-.container-buttons .outputBtn {
+.outputBtn {
   width: 105px;
   padding: 0.5em 1em;
   font-size: .8em;
   cursor: pointer;
+}
+
+.outputBtn:enabled {
+  background-color: #fce7a3;
+  border-color: transparent;
+  border-radius: 4px;
 }
 
 .container-terminal {
@@ -185,7 +190,7 @@ form select:hover {
   background: var(--progressBar-bg-color);
 }
 
-.progress-container .progress {
+.progress {
   height: 100%;
   width: 0;
   border-radius: 0.6rem;

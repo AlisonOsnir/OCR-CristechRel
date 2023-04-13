@@ -30,9 +30,13 @@ const regExp = {
 }
 
 function selectTemplates(productName) {
+  header = []
+  inputValues = {}
+
   switch (productName) {
     case 'TM1':
-    case 'TM2': {
+    case 'TM2':
+    case 'BM HMI': {
       header = [
         'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
         'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
@@ -72,6 +76,12 @@ function selectTemplates(productName) {
       console.log('AVR template selected:', { header, inputValues })
       break
     }
+
+    case 'LAD': {
+      printError('LAD template em desenvolvimento!')
+      throw new Error('LAD template selected:', 'Em desenvolvimento!')
+    }
+
     default: {
       printError(log.templateErrors)
       throw new Error(log.templateErrors)
@@ -117,9 +127,9 @@ async function recognize(imagePath) {
   const columnAreas = [
     {
       left: 1,
-      top: 20,
+      top: 1,
       width: 200,
-      height: 30,
+      height: 80,
     },
     {
       left: 282,
@@ -274,8 +284,7 @@ form.addEventListener('submit', event => {
   window.api.send("toMain", diretoryPath);
 })
 
-// Trocar remover hover, começa tudo disble e Botão iniciar ficar enable quando todos os campos forem preenchidos. Data-atr poderia melhorar esse caso e o submit tbm ou criar em array com o name e itera numa template string
-
+// Selecionar retangulos conforme necessario?
 // impedir repeatCalibration de ocr dependendo do produto
 // Append line on respective excel workbook
 
@@ -292,3 +301,16 @@ function enableButtons() {
   initializeBtn.removeAttribute("disabled")
   outputBtn.forEach(button => button.removeAttribute("disabled"))
 }
+
+function openExcel() {
+  window.api.invokeNotepad(tsvFilePath)
+}
+function openNotepad() {
+  window.api.invokeExcel(xlsFilePath)
+}
+
+const tsvButton = document.querySelector('.tsvBtn')
+const excelButton = document.querySelector('.excelBtn')
+
+tsvButton.addEventListener('click', openExcel)
+excelButton.addEventListener('click', openNotepad)

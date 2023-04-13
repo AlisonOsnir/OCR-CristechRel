@@ -29,11 +29,12 @@
           <option value="TM1">TM1</option>
           <option value="TM2">TM2</option>
           <option value="AVR">AVR</option>
+          <option value="BM HMI">BM HMI</option>
+          <option value="LAD">LAD</option>
         </select>
 
         <label for="firmware"> Firmware: </label>
-        <input type="text" name="firmware" required 
-          placeholder="Informe a versão do firmware" value="2.22">
+        <input type="text" name="firmware" required placeholder="Informe a versão" value="2.22">
 
         <label for="externo"> Externo: </label>
         <select name="externo">
@@ -42,8 +43,7 @@
         </select>
 
         <label for="responsavel"> Responsável: </label>
-        <input type="text" name="responsavel" required 
-          placeholder="Informe nome do responsável" value="alison">
+        <input type="text" name="responsavel" required placeholder="Informe o responsável" value="alison">
       </fieldset>
 
       <fieldset>
@@ -54,7 +54,7 @@
           </label>
 
           <label for="saida"> Saida:
-            <input type="time" name="saida" value="10:00">
+            <input type="time" name="saida" value="09:00">
           </label>
         </div>
       </fieldset>
@@ -62,8 +62,8 @@
       <div class="container-buttons">
         <button class="initializeBtn" type="submit">INICIAR</button>
         <div>
-          <button class="outputBtn" disabled>TSV</button>
-          <button class="outputBtn" disabled>EXCEL</button>
+          <button type="button" class="outputBtn tsvBtn">TSV</button>
+          <button type="button" class="outputBtn excelBtn">EXCEL</button>
         </div>
       </div>
     </form>
