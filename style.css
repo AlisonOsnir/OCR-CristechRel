@@ -122,9 +122,9 @@ form .container-burnIn {
   width: initial;
 }
 
-.container-diretorio input:hover,
-form input:hover,
-form select:hover {
+.container-diretorio input:enabled:hover,
+form input:enabled:hover,
+form select:enabled:hover {
   background-color: #FFFFDF;
   border-color: transparent;
   transition: background-color 200ms ease;

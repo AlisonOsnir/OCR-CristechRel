@@ -4,7 +4,9 @@ const initializeBtn = document.querySelector('.initializeBtn')
 const outputBtn = document.querySelectorAll('.outputBtn')
 const form = document.querySelector('form')
 const terminal = document.querySelector('.terminal')
-const progressbar = document.querySelector(".progress");
+const progressbar = document.querySelector(".progress")
+const tsvButton = document.querySelector('.tsvBtn')
+const excelButton = document.querySelector('.excelBtn')
 
 
 const tsvFilePath = './outputs/output.tsv'
@@ -36,7 +38,7 @@ function selectTemplates(productName) {
   switch (productName) {
     case 'TM1':
     case 'TM2':
-    case 'BM HMI': {
+    case 'BM-HMI': {
       header = [
         'Serial', 'TC1-CR', 'TC1-CL', 'TC2-CR', 'TC2-CL', 'RTD-A', 'RTD-B',
         'Saida_mA1-1mA', 'Saida_mA1-5mA', 'Saida_mA1-10mA', 'Saida_mA1-20mA',
@@ -67,9 +69,7 @@ function selectTemplates(productName) {
       inputValues = {
         'Produto': null,
         'VersaoFW': null,
-        'TCExterno': null,
         'Data': null,
-        'Responsavel': null,
         'BurninIn': null,
         'BurninOut': null
       }
@@ -77,9 +77,27 @@ function selectTemplates(productName) {
       break
     }
 
-    case 'LAD': {
-      printError('LAD template em desenvolvimento!')
-      throw new Error('LAD template selected:', 'Em desenvolvimento!')
+    case 'LAD 6 RTD': {
+      header = [
+        'Serial', 'RTD1', 'RTD2', 'RTD3', 'RTD4', 'RTD5', 'RTD6', 'C20mA'
+      ]
+
+      inputValues = {
+        'Produto': null,
+        'Data': null,
+        'VersaoFW': null,
+        'Responsavel': null,
+        'Teste_2KV': 'OK',
+        'Faixa_de_tensão': 'OK',
+        'Fonte_3V3': '3,3',
+        'RS_485': 'OK',
+        'Tecla': 'OK',
+        'Display/Leds': 'OK',
+        'Reles': 'OK',
+      }
+      console.log('LAD 6 RTD template selected:', { header, inputValues })
+      printError('LAD 6 RTD template em desenvolvimento!')
+      break
     }
 
     default: {
@@ -174,10 +192,36 @@ function extractValues(text, fileName) {
   let repeatCalibraçãoTC = true
   let errorsCounter = 0
 
+  let repeatRTDLadCounter = 0
+
+  if (inputValues.Produto === 'AVR') {
+    repeatCalibraçãoTC = false
+    repeatCalibraçãoSaida = false
+  }
+
   const re = Object.values(regExp)
   const result = []
 
   for (let i = 0; i < re.length; i++) {
+
+    if (inputValues.Produto === 'AVR' && i === 1) {
+      i = 5
+    }
+
+
+    if (inputValues.Produto === 'LAD 6 RTD' && i === 1) {
+      i = 3
+    }
+    if (inputValues.Produto === 'LAD 6 RTD' && i === 5) {
+      i = 3
+      repeatRTDLadCounter++
+    }
+    if(repeatRTDLadCounter === 3) {
+      result.push('N/A') //C20mA sem RegExp por agora
+      break
+    }
+
+
     let match = re[i].exec(text)
 
     if (match !== null) {
@@ -276,17 +320,22 @@ form.addEventListener('submit', event => {
 
   inputValues.Produto = form.produto.value
   inputValues.VersaoFW = form.firmware.value
-  inputValues.TCExterno = form.externo.value
-  inputValues.Responsavel = form.responsavel.value.toUpperCase()
-  inputValues.BurninIn = form.entrada.value
-  inputValues.BurninOut = form.saida.value
+
+  if (form.produto.value !== 'LAD 6 RTD') {
+    inputValues.BurninIn = form.entrada.value
+    inputValues.BurninOut = form.saida.value
+  }
+
+  if (form.produto.value !== 'AVR') {
+    inputValues.Responsavel = form.responsavel.value.toUpperCase()
+  }
+  
+  if (form.produto.value !== 'LAD 6 RTD' && form.produto.value !== 'AVR') {
+    inputValues.TCExterno = form.externo.value
+  }
 
   window.api.send("toMain", diretoryPath);
 })
-
-// Selecionar retangulos conforme necessario?
-// impedir repeatCalibration de ocr dependendo do produto
-// Append line on respective excel workbook
 
 function removeFocus(element) {
   element.blur()
@@ -309,8 +358,29 @@ function openNotepad() {
   window.api.invokeExcel(xlsFilePath)
 }
 
-const tsvButton = document.querySelector('.tsvBtn')
-const excelButton = document.querySelector('.excelBtn')
-
 tsvButton.addEventListener('click', openExcel)
 excelButton.addEventListener('click', openNotepad)
+
+form.produto.addEventListener('change', event => {
+  const selectedProduct = event.target.value
+
+  if(selectedProduct === 'AVR') {
+    form.responsavel.setAttribute('disabled', 'true')
+  } else {
+    form.responsavel.removeAttribute("disabled")
+  }
+  
+  if(selectedProduct === 'AVR' || selectedProduct === 'LAD 6 RTD') {
+    form.externo.setAttribute('disabled', 'true')
+  } else {
+    form.externo.removeAttribute("disabled")
+  }
+
+  if(selectedProduct === 'LAD 6 RTD') {
+    form.entrada.setAttribute('disabled', 'true')
+    form.saida.setAttribute('disabled', 'true')
+  } else {
+    form.entrada.removeAttribute("disabled")
+    form.saida.removeAttribute("disabled")
+  }
+})
